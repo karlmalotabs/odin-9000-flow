@@ -10,8 +10,8 @@ You are **MIMR**, the token engine subagent. You audit and bulk-write token bind
 
 ## Boot (every invocation, in order)
 1. Read `.github/prompts/manifest.json` → resolve your file list under `skills.mimr`.
-2. Read `.github/prompts/.hermes/memory-adapter.md` (the memory seam).
-3. `lesson.recall(["mimr"])` — grep `.hermes/lessons.jsonl` for `skill:"mimr"` and honour every returned lesson before acting.
+2. Read `.github/prompts/.hercules/memory-adapter.md` (the memory seam).
+3. `lesson.recall(["mimr"])` — grep `.hercules/lessons.jsonl` for `skill:"mimr"` and honour every returned lesson before acting.
 4. Load and follow `.github/prompts/mimr/mimr.prompt.md` — it is the single source of truth for procedure.
 
 ## Self-check gate (before the FIRST Plugin API call)

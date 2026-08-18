@@ -15,9 +15,9 @@ Always display this plain-text boot line at the beginning of the workflow:
 
 # MIMR — Metadata Inventory & Mapping Repository
 
-## Hermes integration (run at start, every invocation)
+## Hercules integration (run at start, every invocation)
 
-1. Read `.github/prompts/manifest.json` and `.github/prompts/.hermes/memory-adapter.md`.
+1. Read `.github/prompts/manifest.json` and `.github/prompts/.hercules/memory-adapter.md`.
 2. `lesson.recall(["mimr"])` — honour returned lessons (esp. async reads, cornerRadius single-call, var caching).
 3. Open an episode if running standalone: `episode.append({phase:"open", skill:"mimr", summary})` (ODIN opens it when dispatched).
 4. **Cache:** before resolving variables, `cache.read("vars-<fileKey>-<version>")`; reuse if `cache.valid`. After a fresh resolution, `cache.write` the `name→id` / short-name map keyed by the Figma file `version`.
@@ -28,10 +28,11 @@ Always display this plain-text boot line at the beginning of the workflow:
 
 Audit, compare and bulk-update token bindings across Token Studio (TS) and native Figma variables (NV).
 
-| Workflow        | Trigger                              | Phases     |
-| --------------- | ------------------------------------ | ---------- |
-| **Audit**       | user provides a Figma URL            | 1 → 1b → 2 |
-| **Bulk update** | "apply mapping rules" after an audit | 3          |
+| Workflow            | Trigger                                                             | Phases       |
+| ------------------- | -------------------------------------------------------------------- | ------------ |
+| **Audit**           | user provides a Figma URL                                           | 1 → 1b → 2   |
+| **Bulk update**     | "apply mapping rules" after an audit                                | 3            |
+| **Fast bind (live)** | "convert/bind/sync TS to NV" as a direct action, or instances must not be skipped | scan-bind-live (see below) |
 
 ---
 
@@ -44,6 +45,7 @@ Audit, compare and bulk-update token bindings across Token Studio (TS) and nativ
 | `scripts/resolve.figma.js`              | Phase 1b — variable resolution only. Use paired with audit.figma.js for write-path runs.                                                                                                                                                                                                                                                                                                                                                                    | No                                                     |
 | `scripts/bulk-update.figma.js`          | Phase 3 — write engine (Plugin API), chunked in batches of 100                                                                                                                                                                                                                                                                                                                                                                                              | No                                                     |
 | `scripts/generate-phase3.mjs`           | **Phase 3 script generator** — stamps a JSON write plan into a ready-to-run .figma.js script in ONE call. Eliminates iterative script building. Use this instead of manually assembling the script.                                                                                                                                                                                                                                                         | No                                                     |
+| `scripts/scan-bind-live.figma.js`       | **Fast bind (live) — DEFAULT when the user asks to directly "convert/bind/sync TS to NV" rather than just audit.** Single call: walks the tree (with an `INCLUDE_INSTANCES` flag — set `true` to expand into instance-internal nodes instead of stopping at the INSTANCE boundary, set `false` to match stock audit behavior), resolves each TS token against local variables first, then falls back to `figma.teamLibrary` + `importVariableByKeyAsync` when the file has no local variables for a name, and binds directly. Call once with `DRY_RUN = true` for counts only (Phase 2 confirm gate), then again with `DRY_RUN = false` to write. Skip when Phase 2's full tree/matrix/issue report is actually needed — this script only returns counts + samples, not a full audit tree. | No |
 | `data/token-registry.md`                | All available tokens — human-readable reference                                                                                                                                                                                                                                                                                                                                                                                                             | **User**                                               |
 | `data/token-index.json`                 | All available tokens — compact machine index for agent lookups                                                                                                                                                                                                                                                                                                                                                                                              | **Auto-generated**                                     |
 | `data/mapping-rules.md`                 | Bulk-update rules (YAML blocks)                                                                                                                                                                                                                                                                                                                                                                                                                             | **User**                                               |
@@ -67,6 +69,48 @@ Audit, compare and bulk-update token bindings across Token Studio (TS) and nativ
 
 ---
 
+## Fast bind (live) — direct "convert/bind TS to NV" requests
+
+When the user's request is a direct write instruction rather than "audit this" — e.g. "convert TS
+to NV", "bind TS to NV", "sync tokens to variables" — use `scripts/scan-bind-live.figma.js`
+instead of the Phase 1 → 1b → 2 → 3 pipeline below. It collapses scan + resolve + bind into two
+calls total:
+
+1. **Dry run** — inject `DRY_RUN = true`, `INCLUDE_INSTANCES = <true|false per the request>`.
+   Returns `{ stats, candidateCountByProp, candidateTotal }` only — no writes. Show this table to
+   the user and get a yes/no before writing (this is still the mandatory Phase 2 confirm gate,
+   just against a counts table instead of a full tree).
+2. **Write** — same injection with `DRY_RUN = false`. Returns `{ applied, failed, notFound,
+   notFoundByProp, notFoundSample, failedSample }`.
+
+**`INCLUDE_INSTANCES`** — ask (or infer from the request) whether instance-internal nodes should
+be walked and bound:
+
+- `true`: expand into every `INSTANCE`'s children too (writes become per-instance overrides on
+  those nested node IDs). Required whenever the user says things like "don't skip/ignore
+  instances", or when the root's direct children are themselves instances (a plain FRAME/SECTION
+  wrapping placed components) — the stock digest scripts stop at the INSTANCE boundary and would
+  audit nothing in that case.
+- `false`: stop at the INSTANCE boundary, matching `audit-resolve-digest.figma.js`'s default
+  read-only-instance behavior. Use this when the user just wants top-level/component-definition
+  bindings touched, not every placed occurrence.
+
+**Library fallback (automatic):** the script resolves each TS token against
+`getLocalVariablesAsync()` first; if that returns nothing for a name (common for consumer files
+whose tokens are all published from a team library, e.g. `[Lib]: FDS Design Tokens` / "Core
+Brands"), it auto-falls-back to `figma.teamLibrary.getAvailableLibraryVariableCollectionsAsync()`
++ `getVariablesInLibraryCollectionAsync()` + `importVariableByKeyAsync()`. If the dry-run
+`candidateTotal` is large (100s+) and the target library isn't enabled in the file, that surfaces
+as a near-100% `notFound` rate on the write call — check `figma.teamLibrary
+.getAvailableLibraryVariableCollectionsAsync()` first if that happens and tell the user which
+library needs enabling (Assets panel → Libraries) before retrying.
+
+**When NOT to use this path:** if the user actually wants the full audit tree/matrix/conflict
+report (Phase 2), use the normal `audit-resolve-digest.figma.js` flow — `scan-bind-live.figma.js`
+only returns counts and samples, not a rendered tree.
+
+---
+
 ## Phase 1 — Discovery (ALWAYS use scripts)
 
 > **⚠️ MANDATORY: Use `scripts/audit.figma.js` for ALL discovery.**
@@ -76,6 +120,7 @@ Audit, compare and bulk-update token bindings across Token Studio (TS) and nativ
 >
 > - **Audit-only (no writes planned)** → use `audit-resolve-digest.figma.js`. Single call, inline result, no file writes, no python parsing needed.
 > - **Write-path (Phase 3 bulk-update planned)** → use `audit.figma.js` + `resolve.figma.js`. Full node lists are required by `bulk-update.figma.js`.
+> - **Direct "convert/bind TS to NV" request** → use `scripts/scan-bind-live.figma.js` (see § Fast bind (live) above) instead of this pipeline.
 
 ### Script load (session-cached)
 

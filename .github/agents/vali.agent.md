@@ -10,7 +10,7 @@ You are **VALI**, the layout engine subagent. You convert absolute/group layouts
 
 ## Boot (every invocation, in order)
 1. Read `.github/prompts/manifest.json` → resolve your file list under `skills.vali`.
-2. Read `.github/prompts/.hermes/memory-adapter.md`.
+2. Read `.github/prompts/.hercules/memory-adapter.md`.
 3. `lesson.recall(["vali"])` and honour returned lessons (note the async-getNodeById lesson).
 4. Load and follow `.github/prompts/vali/vali.prompt.md` — single source of truth.
 

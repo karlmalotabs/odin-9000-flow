@@ -1,38 +1,38 @@
 ---
-name: "hermes-memory-adapter"
-description: "The ONLY indirection point for ODIN/skill memory + caching. All skills call these verbs; the backend (local files now, external Hermes service later) is swappable here without touching any skill prompt."
+name: "hercules-memory-adapter"
+description: "The ONLY indirection point for ODIN/skill memory + caching. All skills call these verbs; the backend (local files now, external Hercules service later) is swappable here without touching any skill prompt."
 ---
 
-# Hermes Memory Adapter
+# Hercules Memory Adapter
 
 > Single seam between the skills and where memory lives.
-> **Skills never read/write `.hermes/` paths directly — they call the verbs below.**
-> To migrate to an external Hermes service later, only the "Backend binding" table changes.
+> **Skills never read/write `.hercules/` paths directly — they call the verbs below.**
+> To migrate to an external Hercules service later, only the "Backend binding" table changes.
 
 ## Backend binding (current = LOCAL)
 
-The local backend is implemented by **`hermes.mjs`** (zero-dependency Node CLI in this
-directory). Skills invoke a verb by shelling out to it — never by reading/writing `.hermes/`
+The local backend is implemented by **`hercules.mjs`** (zero-dependency Node CLI in this
+directory). Skills invoke a verb by shelling out to it — never by reading/writing `.hercules/`
 paths inline. Large or shell-unsafe JSON payloads are piped via stdin (`… <verb> -`).
 
-The "future" column targets the **real** Hermes internals (`hermes_state.py`,
-`hermes_cli/kanban_db.py`, `hermes_cli/goals.py`) so the swap is a near drop-in — not a
-guessed REST API. See `## Hermes contract map` below for the rationale.
+The "future" column targets the **real** Hercules internals (`hercules_state.py`,
+`hercules_cli/kanban_db.py`, `hercules_cli/goals.py`) so the swap is a near drop-in — not a
+guessed REST API. See `## Hercules contract map` below for the rationale.
 
-| Verb                            | Local backend (active) — `node .hermes/hermes.mjs …`                                                                                                                                                        | Real Hermes binding (future)                                                                                               |
+| Verb                            | Local backend (active) — `node .hercules/hercules.mjs …`                                                                                                                                                    | Real Hercules binding (future)                                                                                             |
 | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
 | `state.read(runId)`             | `state read <runId>` → prints the JSON (or `{}` if absent)                                                                                                                                                  | `SessionDB.get_meta("run:<runId>")` → JSON                                                                                 |
-| `state.write(runId, obj)`       | `state write <runId> -` (obj on stdin)                                                                                                                                                                      | `SessionDB.set_meta("run:<runId>", json)` — the `state_meta` k/v table; same pattern Hermes uses for `goal:<session_id>`   |
+| `state.write(runId, obj)`       | `state write <runId> -` (obj on stdin)                                                                                                                                                                      | `SessionDB.set_meta("run:<runId>", json)` — the `state_meta` k/v table; same pattern Hercules uses for `goal:<session_id>` |
 | `episode.append(ev)`            | `episode append -` (ev on stdin; `ts` auto-stamped if omitted)                                                                                                                                              | a `kanban_db.Run` row transition (claim = `open` → complete/block/crash = `close`); carries `status/outcome/summary/error` |
 | `lesson.append(le)`             | `lesson append -` (le on stdin; `applied` defaults to `false`)                                                                                                                                              | agent-curated memory write (`MEMORY.md`) or a skill self-improvement edit                                                  |
 | `lesson.recall(tags)`           | `lesson recall <skill                                                                                                                                                                                       | tag…>` → matching JSONL lines                                                                                              | injected memory + FTS5 session search (`messages_fts`) |
 | `lesson.sweep(filter?)`         | `lesson sweep [--cap N]` → pending proposals (`applied≠true` **and** `ruleProposal` non-null), near-duplicates collapsed (same `skill`+`file`+`lesson`), grouped by `ruleProposal.file`, capped (default 5) | curated-memory review query (the "pending self-improvements" backlog)                                                      |
-| `lesson.update(matcher, patch)` | `lesson update '<matcher-json>' '<patch-json>'` — patches every line matching `matcher`, rewrites the file one-object-per-line                                                                              | curated-memory edit (Hermes treats lessons as mutable agent memory)                                                        |
-| `cache.read(key)`               | `cache read <key>` → JSON (or `{}`)                                                                                                                                                                         | local-only (rebuildable; no Hermes equivalent needed)                                                                      |
+| `lesson.update(matcher, patch)` | `lesson update '<matcher-json>' '<patch-json>'` — patches every line matching `matcher`, rewrites the file one-object-per-line                                                                              | curated-memory edit (Hercules treats lessons as mutable agent memory)                                                      |
+| `cache.read(key)`               | `cache read <key>` → JSON (or `{}`)                                                                                                                                                                         | local-only (rebuildable; no Hercules equivalent needed)                                                                    |
 | `cache.write(key, obj)`         | `cache write <key> -` (obj on stdin)                                                                                                                                                                        | local-only                                                                                                                 |
 | `cache.valid(key, ver)`         | `cache valid <key> <ver>` → `true`/`false` + exit 0/1                                                                                                                                                       | local-only                                                                                                                 |
 
-### Deterministic utilities (also via `hermes.mjs`)
+### Deterministic utilities (also via `hercules.mjs`)
 
 These replace bookkeeping the orchestrator used to do by hand:
 
@@ -43,15 +43,15 @@ These replace bookkeeping the orchestrator used to do by hand:
 | Model resolution | `util resolve-model <skill> [--escalate]`                                        | `{ model, runSubagent, escalationGateRequired, … }` from `manifest.json`       |
 | PAT session      | `session read` / `session write --pat <token> [--frame <url>]` / `session clear` | reads/writes `.odin-session` (`PAT` + `LAST_FRAME`, auto-gitignored, mode 600) |
 
-`BACKEND=local` is the only supported value today. Do not hardcode `.hermes/` paths anywhere except this file and `hermes.mjs`.
+`BACKEND=local` is the only supported value today. Do not hardcode `.hercules/` paths anywhere except this file and `hercules.mjs`.
 
 ## Store layout (local backend)
 
 ```
-.hermes/
+.hercules/
   memory-adapter.md      ← this file (the seam)
-  hermes.mjs             ← local backend CLI (implements every verb + util)
-  hermes.test.mjs        ← unit tests (node --test)
+  hercules.mjs           ← local backend CLI (implements every verb + util)
+  hercules.test.mjs      ← unit tests (node --test)
   episodes.jsonl         ← run journal — REPLACES the old `bd` issue trail (committed)
   lessons.jsonl          ← distilled insights, read at startup (committed)
   state/<runId>.json     ← live run state (gitignored — volatile)
@@ -84,7 +84,7 @@ These replace bookkeeping the orchestrator used to do by hand:
 }
 ```
 
-`status` ∈ `active | paused | done | cleared` (mirrors Hermes `goals.GoalState.status`).
+`status` ∈ `active | paused | done | cleared` (mirrors Hercules `goals.GoalState.status`).
 `outcome` (set at close) ∈ `complete | blocked | failed | timeout | reclaimed` (mirrors
 `kanban_db.Run.outcome`). `summary` is the one-line handoff string a downstream worker reads.
 
@@ -154,25 +154,25 @@ Cache **key convention**: `<kind>-<fileKey>-<nodeId?>-<version>`. `cache.valid` 
 - **Reconcile at close** (self-improvement loop): on run close, `lesson.sweep()` for pending rule proposals (already filtered to `applied≠true` + non-null `ruleProposal`, deduped, capped). If any exist, surface them as a single gated `vscode_askQuestions` prompt; for each **approved** proposal, apply its `diff` to the target data file, then `lesson.update` that line to `applied=true` + stamp `appliedAt`. Declined proposals stay `applied=false`. **Never auto-write a rule file without approval.**
 - **No PATs in any store file** — reference the PAT via `patRef` and store the token only through `session write` (never inline it in state/episodes/lessons).
 
-## Hermes contract map
+## Hercules contract map
 
-Why the bindings above target specific Hermes internals — keep these analogies intact so the
+Why the bindings above target specific Hercules internals — keep these analogies intact so the
 local store stays swap-compatible:
 
 - **`runId` ↔ a `kanban_db.Run`.** A run is "one attempt to execute a task — created on claim,
   closed on complete/block/crash/timeout/reclaim." Our `open`/`close` episode pair = claim/close;
   our `outcome`/`summary`/`error` fields are named to match its columns.
-- **The ODIN loop ↔ the Hermes "Ralph loop" (`goals.py`).** Plan→Choose→Execute→Observe→Refine is
+- **The ODIN loop ↔ the Hercules "Ralph loop" (`goals.py`).** Plan→Choose→Execute→Observe→Refine is
   the same shape: after each turn a judge asks "is the goal satisfied?" → `done` | `continue`.
   Our Observe/Refine step is that judge; `state.status` reuses its `active|paused|done|cleared`.
-- **Lessons ↔ Memory; skill prompts ↔ Skills.** Hermes' rule of thumb: _"If you'd put it in a
+- **Lessons ↔ Memory; skill prompts ↔ Skills.** Hercules' rule of thumb: _"If you'd put it in a
   reference document, it's a skill. If you'd put it on a sticky note, it's memory."_ Our
   `lessons.jsonl` is the sticky-note tier (compact, recalled at startup); the `.prompt.md` /
   `SKILL.md` files are the procedural tier (loaded on demand). Do not blur the two.
-- **`manifest.json` ↔ a Hermes skill-bundle.** A bundle is `{name, description, skills[],
+- **`manifest.json` ↔ a Hercules skill-bundle.** A bundle is `{name, description, skills[],
 instruction}` that codifies "how we always use these together." Our manifest's `skills` +
   `pipelineOrder` + `handoffContracts` is exactly that bundle, expressed locally. When syncing,
-  it can be emitted as `~/.hermes/skill-bundles/odin.yaml`.
-- **`state_meta` is the universal sub-state escape hatch.** Hermes stores arbitrary serializable
+  it can be emitted as `~/.hercules/skill-bundles/odin.yaml`.
+- **`state_meta` is the universal sub-state escape hatch.** Hercules stores arbitrary serializable
   per-session state as JSON under a string key (`goal:<id>`, etc.). Our `state/<runId>.json`
   maps 1:1 onto `set_meta("run:<runId>", json)` — no schema migration needed.

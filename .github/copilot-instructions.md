@@ -1,12 +1,12 @@
 ## Issue Tracking & Memory
 
-This project uses the **Hermes harness** for persistent run state, an episode journal, and
+This project uses the **Hercules harness** for persistent run state, an episode journal, and
 agent lessons. There is **no Beads / `bd`** anymore. All memory goes through the adapter seam:
 
-- Seam: `.github/prompts/.hermes/memory-adapter.md` (the only place that knows where memory lives)
-- Journal: `.github/prompts/.hermes/episodes.jsonl` (the `open → close` audit trail)
-- Lessons: `.github/prompts/.hermes/lessons.jsonl` (read at startup, written during Observe)
-- Live state: `.github/prompts/.hermes/state/<runId>.json` (volatile, gitignored)
+- Seam: `.github/prompts/.hercules/memory-adapter.md` (the only place that knows where memory lives)
+- Journal: `.github/prompts/.hercules/episodes.jsonl` (the `open → close` audit trail)
+- Lessons: `.github/prompts/.hercules/lessons.jsonl` (read at startup, written during Observe)
+- Live state: `.github/prompts/.hercules/state/<runId>.json` (volatile, gitignored)
 
 **Quick reference:**
 - Read `.github/prompts/manifest.json` first — it maps every skill to its files + load triggers.
@@ -19,7 +19,7 @@ agent lessons. There is **no Beads / `bd`** anymore. All memory goes through the
 Whenever a skill (prompt) is invoked via `/skill-name` in chat, you MUST:
 
 1. **Manifest**: read `.github/prompts/manifest.json` and the memory adapter before any work.
-2. **Open**: open a Hermes run — `state.write(runId, …)` + `episode.append({phase:"open", skill, summary})`. The summary names the component by type/variant, **never a node ID**.
+2. **Open**: open a Hercules run — `state.write(runId, …)` + `episode.append({phase:"open", skill, summary})`. The summary names the component by type/variant, **never a node ID**.
 3. **Recall**: `lesson.recall([skill])` and honour returned lessons.
 4. **Work**: execute the skill as instructed (self-check gate: confirm scripts loaded first).
 5. **Observe**: append outcomes to state; capture lesson candidates via `lesson.append`.

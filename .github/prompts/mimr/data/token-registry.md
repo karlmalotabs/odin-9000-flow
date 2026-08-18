@@ -642,3 +642,15 @@
 | Short Name | Token Studio Path | Type | Native Variable Name | Description |
 |---|---|---|---|---|
 | `fds-utility-const-invert` | `fds-utility-const.effects.fds-utility-const-invert` | `other` |  | filter: invert() toggle — 0 keeps assets un-inverted (default surface); 1 flips to white (alternate surface). |
+
+
+## Gradient status tokens (fds-*-shade)
+
+These are linear-gradient **paint styles** bound via `fillStyleId`, not a scalar `fills` NV variable. The NV `fills` array on nodes using them contains the two gradient stops (`ref/system/<status>/50` + `ref/system/<status>/60`). `hasFillNV()` correctly returns true via `fillStyleId` presence — **do not** flag these as `MISSING_NV_FILL`.
+
+| Short Name | Token Studio Path | Type | Native Variable Name | Description |
+|---|---|---|---|---|
+| `fds-success-shade` | `var.fds.fds-success-shade` | `color` (linear-gradient) | *(paint style — `fillStyleId`)* | Gradient stops: `ref/system/success/50` + `ref/system/success/60`. |
+| `fds-info-shade` | `var.fds.fds-info-shade` | `color` (linear-gradient) | *(paint style — `fillStyleId`)* | Gradient stops: `ref/system/info/50` + `ref/system/info/60`. |
+| `fds-alert-shade` | `var.fds.fds-alert-shade` | `color` (linear-gradient) | *(paint style — `fillStyleId`)* | Gradient stops: `ref/system/alert/50` + `ref/system/alert/60`. |
+| `fds-error-shade` | `var.fds.fds-error-shade` | `color` (linear-gradient) | *(paint style — `fillStyleId`)* | Gradient stops: `ref/system/error/50` + `ref/system/error/60`. |

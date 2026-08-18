@@ -1,7 +1,7 @@
 # Agent Instructions
 
-This project uses the **Hermes harness** for run state, an episode journal, and agent lessons.
-Read `.github/prompts/manifest.json` first, then `.github/prompts/.hermes/memory-adapter.md` for
+This project uses the **Hercules harness** for run state, an episode journal, and agent lessons.
+Read `.github/prompts/manifest.json` first, then `.github/prompts/.hercules/memory-adapter.md` for
 the memory seam. There is no Beads / `bd`.
 
 ## Quick Reference
@@ -42,16 +42,16 @@ cp -rf source dest          # NOT: cp -r source dest
 - `apt-get` - use `-y` flag
 - `brew` - use `HOMEBREW_NO_AUTO_UPDATE=1` env var
 
-<!-- BEGIN HERMES INTEGRATION v:1 -->
-## Hermes Harness (memory & run state)
+<!-- BEGIN HERCULES INTEGRATION v:1 -->
+## Hercules Harness (memory & run state)
 
-This project uses the **Hermes harness** instead of an external issue tracker. All persistent
-memory is reached through one seam: `.github/prompts/.hermes/memory-adapter.md`.
+This project uses the **Hercules harness** instead of an external issue tracker. All persistent
+memory is reached through one seam: `.github/prompts/.hercules/memory-adapter.md`.
 
 ### Rules
 
 - Read `.github/prompts/manifest.json` first on every skill invocation.
-- Track ALL task state through Hermes (`state.*` / `episode.*`) — do NOT use TodoWrite or markdown TODO lists for run tracking.
+- Track ALL task state through Hercules (`state.*` / `episode.*`) — do NOT use TodoWrite or markdown TODO lists for run tracking.
 - Persist durable knowledge as lessons (`lesson.append`) — do NOT use MEMORY.md files.
 - Every Figma write needs an `open → close` episode pair.
 
@@ -78,4 +78,4 @@ When ending a work session, complete ALL steps. Work is NOT complete until `git 
 - Work is NOT complete until `git push` succeeds.
 - NEVER stop before pushing — that strands work locally.
 - If push fails, resolve and retry until it succeeds.
-<!-- END HERMES INTEGRATION -->
+<!-- END HERCULES INTEGRATION -->

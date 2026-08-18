@@ -47,7 +47,7 @@ On the **first skill invocation in a session** (the first time Kevin would narra
 
 Cache the selected mode for the rest of the session. Do not ask again.
 
-**Override:** All Hermes housekeeping (`state.write`, `episode.append`, `lesson.append`) and git operations (`git commit`, `git push`) **always use Ultra** regardless of selected mode. These are housekeeping — no one needs a story about an episode append.
+**Override:** All Hercules housekeeping (`state.write`, `episode.append`, `lesson.append`) and git operations (`git commit`, `git push`) **always use Ultra** regardless of selected mode. These are housekeeping — no one needs a story about an episode append.
 
 ---
 
@@ -143,7 +143,7 @@ Cache the selected mode for the rest of the session. Do not ask again.
 **Ultra:**
 > 6/7 fail → `importByKey` 404, comp local not lib. Need nodeId. Btn ok.
 
-## Example: Hermes / git (ALWAYS Ultra)
+## Example: Hercules / git (ALWAYS Ultra)
 
 > `episode.append` → open odin-20260615 · `episode.append` → close · `git push` → origin/main ✓
 

@@ -1,7 +1,9 @@
 {
   "$comment": "ODIN reads ONLY this file at startup. It is intentionally tiny so it is never skipped. Full skill prompts + scripts are loaded lazily by each subagent when dispatched. Before any Plugin API call, a subagent MUST verify its listed scripts were actually read (self-check gate).",
   "version": 1,
-  "memoryAdapter": ".github/prompts/.hermes/memory-adapter.md",
+  "executionMode": "inline",
+  "executionModeNote": "Set 2026-08-17 per explicit user instruction: no runSubagent dispatch, no model escalation/downgrade. ODIN reads each skill's prompt+scripts directly and executes it inline in the current session on the current model. See odin-9000.prompt.md \u00a7 Execution mode for the full override. modelRouting below is inert while this is 'inline' — re-set to 'subagents' to restore dispatch + model routing.",
+  "memoryAdapter": ".github/prompts/.hercules/memory-adapter.md",
   "skills": {
     "odin": {
       "role": "Orchestrator — Plan→Choose→Execute→Observe→Refine loop",
@@ -55,7 +57,8 @@
         ".github/prompts/mimr/scripts/resolve.figma.js",
         ".github/prompts/mimr/scripts/bulk-update.figma.js",
         ".github/prompts/mimr/scripts/generate-phase3.mjs",
-        ".github/prompts/mimr/scripts/token-lookup.py"
+        ".github/prompts/mimr/scripts/token-lookup.py",
+        ".github/prompts/mimr/scripts/scan-bind-live.figma.js"
       ],
       "data": [
         ".github/prompts/mimr/data/token-registry.md",
@@ -89,8 +92,8 @@
         "kbRepo": "BetssonGroup/betsson-kb-docs",
         "kbBranch": "feat/fds-token-docs-refactor",
         "kbPaths": "knowledge/shared/global/design-standards/tokens",
-        "clonePath": ".github/prompts/.hermes/cache",
-        "manifest": ".github/prompts/.hermes/cache/kb-manifest.json",
+        "clonePath": ".github/prompts/.hercules/cache",
+        "manifest": ".github/prompts/.hercules/cache/kb-manifest.json",
         "stalenessCheck": "git ls-remote <repo> <branch>; re-pull only if SHA differs"
       }
     },
@@ -128,7 +131,7 @@
     "mimr->saga": "NV map {prop: shortName, value} reused for --fds-* CSS vars (no re-resolution)",
     "modi->vali": "swap report; converted instances ready for layout pass"
   },
-  "$hermesBundle": "This manifest is the local analog of a Hermes skill-bundle (~/.hermes/skill-bundles/<slug>.yaml). The `bundle` block below mirrors that schema {name, description, skills[], instruction} so it can be emitted verbatim when syncing to a real Hermes install.",
+  "$herculesBundle": "This manifest is the local analog of a Hercules skill-bundle (~/.hercules/skill-bundles/<slug>.yaml). The `bundle` block below mirrors that schema {name, description, skills[], instruction} so it can be emitted verbatim when syncing to a real Hercules install.",
   "bundle": {
     "name": "odin-9000",
     "description": "Figma design-to-code pipeline: wireframe resolve (MODI) -> Auto Layout (VALI) -> token audit/write (MIMR) -> component codegen (SAGA), with Librarian for KB/token lookups.",

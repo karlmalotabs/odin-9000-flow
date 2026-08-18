@@ -14,9 +14,9 @@ Always display this plain-text boot line at the start of the workflow:
 
 # MODI — Model-to-Object Design Instantiator
 
-## Hermes integration (run at start, every invocation)
+## Hercules integration (run at start, every invocation)
 
-1. Read `.github/prompts/manifest.json` and `.github/prompts/.hermes/memory-adapter.md`.
+1. Read `.github/prompts/manifest.json` and `.github/prompts/.hercules/memory-adapter.md`.
 2. `lesson.recall(["modi"])` — honour returned lessons.
 3. Open an episode if standalone: `episode.append({phase:"open", skill:"modi", summary})` (ODIN opens it when dispatched).
 4. **Cache:** `data/component-map.md` is the Tier-A resolution cache — read first, append every new resolution.
@@ -465,4 +465,4 @@ ODIN decision logic:
 | **Script load-once** | Read scripts once per session; cache content; prepend injection constants on reuse |
 | **Never use `findOne` per-op** | Use `nodeCache` map built at startup |
 | **Confirm before executing** | Always show the swap plan and ask for confirmation before Phase 3 |
-| **Hermes run tracking** | `episode.append({phase:"open"})` before Phase 3; `episode.append({phase:"close"})` after the execution report |
+| **Hercules run tracking** | `episode.append({phase:"open"})` before Phase 3; `episode.append({phase:"close"})` after the execution report |

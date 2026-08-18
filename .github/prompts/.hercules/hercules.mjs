@@ -1,16 +1,16 @@
 #!/usr/bin/env node
 /**
- * hermes.mjs — local backend for the Hermes memory adapter.
+ * hercules.mjs — local backend for the Hercules memory adapter.
  *
  * Implements every verb described in `memory-adapter.md` (state / episode /
  * lesson / cache) plus the deterministic Tier-1 utilities (run-id, Figma URL
  * parsing, model resolution, PAT session handling) so the orchestrator and
  * skill prompts no longer perform this bookkeeping by hand in-context.
  *
- * Zero dependencies — Node >= 18, ESM. All `.hermes/` paths resolve relative
+ * Zero dependencies — Node >= 18, ESM. All `.hercules/` paths resolve relative
  * to this file, so the CLI works regardless of the caller's cwd.
  *
- *   node hermes.mjs <group> <verb> [args]
+ *   node hercules.mjs <group> <verb> [args]
  *
  * JSON payload args may be passed inline or, when omitted / given as "-",
  * read from stdin (preferred for large or shell-unsafe objects).
@@ -27,20 +27,20 @@ import {
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const HERMES_DIR = process.env.HERMES_HOME
-  ? resolve(process.env.HERMES_HOME)
+const HERCULES_DIR = process.env.HERCULES_HOME
+  ? resolve(process.env.HERCULES_HOME)
   : dirname(fileURLToPath(import.meta.url));
-const PROMPTS_DIR = resolve(HERMES_DIR, "..");
-const STATE_DIR = join(HERMES_DIR, "state");
-const CACHE_DIR = join(HERMES_DIR, "cache");
-const EPISODES = join(HERMES_DIR, "episodes.jsonl");
-const LESSONS = join(HERMES_DIR, "lessons.jsonl");
+const PROMPTS_DIR = resolve(HERCULES_DIR, "..");
+const STATE_DIR = join(HERCULES_DIR, "state");
+const CACHE_DIR = join(HERCULES_DIR, "cache");
+const EPISODES = join(HERCULES_DIR, "episodes.jsonl");
+const LESSONS = join(HERCULES_DIR, "lessons.jsonl");
 const MANIFEST = join(PROMPTS_DIR, "manifest.json");
 
 // ── helpers ─────────────────────────────────────────────────────────────────
 
 function die(msg, code = 1) {
-  process.stderr.write(`hermes: ${msg}\n`);
+  process.stderr.write(`hercules: ${msg}\n`);
   process.exit(code);
 }
 
@@ -319,7 +319,7 @@ function resolveModel(skill, escalate) {
 // ── session (PAT file) ───────────────────────────────────────────────────────
 
 function sessionPath() {
-  const root = findRepoRoot(HERMES_DIR) ?? PROMPTS_DIR;
+  const root = findRepoRoot(HERCULES_DIR) ?? PROMPTS_DIR;
   return join(root, ".odin-session");
 }
 
@@ -353,7 +353,7 @@ function sessionRead() {
 
 function sessionWrite(pat, frame) {
   if (!pat) die("session write: missing --pat <token>");
-  const root = findRepoRoot(HERMES_DIR) ?? PROMPTS_DIR;
+  const root = findRepoRoot(HERCULES_DIR) ?? PROMPTS_DIR;
   const added = ensureGitignored(root);
   const body = `PAT=${pat.trim()}\nLAST_FRAME=${(frame ?? "").trim()}\n`;
   writeFileSync(join(root, ".odin-session"), body, { mode: 0o600 });
@@ -413,8 +413,8 @@ const table = {
 if (group === "--help" || group === undefined) {
   out(
     [
-      "hermes.mjs — local Hermes memory backend",
-      "usage: node hermes.mjs <group> <verb> [args]",
+      "hercules.mjs — local Hercules memory backend",
+      "usage: node hercules.mjs <group> <verb> [args]",
       "groups: state | episode | lesson | cache | util | session",
       "verbs:",
       "  state read <runId> | state write <runId> [json|-]",

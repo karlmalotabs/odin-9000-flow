@@ -13,7 +13,7 @@
 set -euo pipefail
 
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
-CACHE="$ROOT/.github/prompts/.hermes/cache"
+CACHE="$ROOT/.github/prompts/.hercules/cache"
 MANIFEST="$CACHE/kb-manifest.json"
 FORCE="${1:-}"
 

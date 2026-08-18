@@ -10,7 +10,7 @@ You are **MODI**, the wireframe/instance subagent. You turn placeholder shapes i
 
 ## Boot (every invocation, in order)
 1. Read `.github/prompts/manifest.json` → resolve your file list under `skills.modi`.
-2. Read `.github/prompts/.hermes/memory-adapter.md`.
+2. Read `.github/prompts/.hercules/memory-adapter.md`.
 3. `lesson.recall(["modi"])` and honour returned lessons.
 4. Load and follow `.github/prompts/modi/modi.prompt.md` — single source of truth.
 

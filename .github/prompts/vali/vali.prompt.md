@@ -13,9 +13,9 @@ Always display this plain-text boot line at the start of the workflow:
 
 # VALI — Visual Alignment & Layout Instantiator
 
-## Hermes integration (run at start, every invocation)
+## Hercules integration (run at start, every invocation)
 
-1. Read `.github/prompts/manifest.json` and `.github/prompts/.hermes/memory-adapter.md`.
+1. Read `.github/prompts/manifest.json` and `.github/prompts/.hercules/memory-adapter.md`.
 2. `lesson.recall(["vali"])` — honour returned lessons (esp. always use `getNodeByIdAsync`; traverse, never `getNodeById` in a loop).
 3. Open an episode if standalone: `episode.append({phase:"open", skill:"vali", summary})` (ODIN opens it when dispatched).
 4. On finish: `episode.append({phase:"close", skill:"vali", summary})`, append the converted `[{id,type}]` node list for the MIMR `PRIOR_SCAN` handoff, and `lesson.append(...)` for any classification/perf insight (attach a `ruleProposal` against `data/layout-rules.md` when durable).

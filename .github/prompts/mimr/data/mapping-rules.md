@@ -755,4 +755,25 @@ label incorrectly uses `fds-success` as its TS fill (wrong category — should b
 
 ---
 
+## Library-linked NV collections (team library, not local to file)
+
+When the NV variable collection is imported from a **team library** (e.g. `[Lib]: FDS Design Tokens`) rather than defined locally in the file:
+
+1. `getLocalVariablesAsync()` returns **empty** for library-only variables — do not rely on it to resolve names.
+2. Discover the collection: `figma.teamLibrary.getAvailableLibraryVariableCollectionsAsync()` → match by `libraryName`.
+3. Resolve name → key: `figma.teamLibrary.getVariablesInLibraryCollectionAsync(collectionKey)`.
+4. Import before binding: `figma.variables.importVariableByKeyAsync(variableKey)` — cache the imported `Variable` per short name for the run.
+5. For `fills`/`strokes`, never call `node.setBoundVariable('fills', 0, v)` directly — it throws `must be set on paints directly`. Clone the paint, call `figma.variables.setBoundVariableForPaint(paint, 'color', variable)`, then reassign `node.fills = [newPaint]`.
+6. **Gradient paints** (`GRADIENT_LINEAR`, etc.) cannot take a solid-color variable bind — `setBoundVariableForPaint` throws `can only bind variables to solid paints`. Treat these as legitimate audit exceptions (e.g. progress-step gradients, shade overlays) and skip rather than forcing a fallback solid paint.
+
+### PAT scope gap (per-file note)
+
+For file `mavdkFAsPZZiatzwZ39wsn` ("Fig Vars FDS Demo"), the project PAT lacks `file_variables:read` scope, so `GET /v1/files/{key}/variables/local` returns 403. NV name discovery for this file must go through the Plugin API (`getLocalVariablesAsync` / `teamLibrary.*Async`), not REST. Derive candidate names from the TS dot→slash convention and confirm via the Plugin API on first write.
+
+### fds-collapsible inner-node NV gap
+
+fds-collapsible COMPONENT roots have TS+NV complete fill/borderColor, but inner layers (chevron VECTORs, title TEXTs, content-slot INSTANCEs) are TS-only and need an NV write pass: chevron → `fds-on-surface-m` / `fds-on-alternate-surface-low`; title TEXT → `fds-on-surface-hi` / `fds-on-alternate-surface-hi` + `Paragraphs.fds` typography; content slots → `fds-surface-variant` / `fds-alternate-surface-variant`. Also fix node `8889:78084` (on-alternate-surface, Stroke=Hidden, Accordion-State=Open) which carries `fds-surface-variant` fill TS instead of `fds-alternate-surface-variant` (copy-paste artifact) before running the NV pass.
+
+---
+
 <!-- Add YAML bulk-update rules below. Each rule is a fenced YAML block. -->

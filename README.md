@@ -2,7 +2,7 @@
 
 ![Odin Flow](docs/images/header_odin.png)
 
-A GitHub Copilot agent skill suite for automating the Figma → Design System → Storybook pipeline. Powered by the **Hermes harness** for persistent run state, an episode journal, and agent lessons — all stored locally in the repo, no external service required.
+A GitHub Copilot agent skill suite for automating the Figma → Design System → Storybook pipeline. Powered by the **Hercules harness** for persistent run state, an episode journal, and agent lessons — all stored locally in the repo, no external service required.
 
 ---
 
@@ -11,7 +11,8 @@ A GitHub Copilot agent skill suite for automating the Figma → Design System �
 | Guide                                            | For                                                                                                                                                       |
 | ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [docs/use/USAGE.md](docs/use/USAGE.md)           | **Operating ODIN Flow** — prerequisites, quickstart, the skills, worked examples, controls, troubleshooting.                                              |
-| [docs/tech/INTERNALS.md](docs/tech/INTERNALS.md) | **Internals** — architecture, the manifest contract, ODIN's loop, the Hermes harness, model routing, the scripts API, data formats, and how to extend it. |
+| [docs/tech/INTERNALS.md](docs/tech/INTERNALS.md) | **Internals** — architecture, the manifest contract, ODIN's loop, the Hercules harness, model routing, the scripts API, data formats, and how to extend it. |
+| [docs/tech/SECURITY.md](docs/tech/SECURITY.md)   | **Security overview (TET submission)** — data handled, secrets, execution surface, network egress, risks & mitigations, for Infosec review.                |
 
 The sections below are a quick tour; the guides above go deeper.
 
@@ -30,7 +31,7 @@ The sections below are a quick tour; the guides above go deeper.
  ╚═════╝ ╚═════╝ ╚═╝╚═╝  ╚═══╝
 ```
 
-The top-level orchestrator. Reads design intent from a Figma URL or brief, decides which sub-skills to run, and sequences them in dependency order. Dispatches each sub-skill as an isolated subagent, resolves the model per task, and records every decision in the Hermes episode journal for future sessions.
+The top-level orchestrator. Reads design intent from a Figma URL or brief, decides which sub-skills to run, and sequences them in dependency order. Dispatches each sub-skill as an isolated subagent, resolves the model per task, and records every decision in the Hercules episode journal for future sessions.
 
 **Invoke:** `/odin-9000`
 **Pipeline:** MODI → VALI → MIMR → SAGA
@@ -132,7 +133,7 @@ Code generation engine. Scaffolds semantic HTML + vanilla CSS + CSS Modules, **o
 
 A read-only subagent that owns the large external Token Studio JSON and Knowledge Base `.md` repos behind a narrow query interface. When a token value is missing from the local `token-registry.md`, or a KB lookup is needed, ODIN (or MIMR) dispatches Librarian instead of loading the multi-megabyte source files into context.
 
-Librarian keeps a **local mirror** of the external repos under `.github/prompts/.hermes/cache/`, refreshed by `sync-kb.sh` with a cheap staleness check (`git ls-remote` SHA probe — only re-pulls when the remote branch SHA differs).
+Librarian keeps a **local mirror** of the external repos under `.github/prompts/.hercules/cache/`, refreshed by `sync-kb.sh` with a cheap staleness check (`git ls-remote` SHA probe — only re-pulls when the remote branch SHA differs).
 
 | Source     | Repo                                 | Branch                         | Path                                              |
 | ---------- | ------------------------------------ | ------------------------------ | ------------------------------------------------- |
@@ -141,7 +142,7 @@ Librarian keeps a **local mirror** of the external repos under `.github/prompts/
 
 **Invoke:** dispatched automatically (not user-invocable)
 **Model:** Claude Haiku 4.5
-**Refresh mirror:** `bash .github/prompts/.hermes/sync-kb.sh` (add `--force` to re-pull regardless of SHA)
+**Refresh mirror:** `bash .github/prompts/.hercules/sync-kb.sh` (add `--force` to re-pull regardless of SHA)
 
 ---
 
@@ -172,13 +173,13 @@ A persona overlay, not a workflow — it modifies how the agent narrates, never 
 /kevin lite|normal|ultra   # switch mode at any time
 ```
 
-On the first skill invocation per session, Kevin asks once which mode to use (default: Normal), then caches it. Technical data (node IDs, variant props, counts) stays 100% accurate in every mode. Hermes housekeeping (`state.write`, `episode.append`, `lesson.append`) and git operations always run in Ultra — nobody needs a story about an episode append.
+On the first skill invocation per session, Kevin asks once which mode to use (default: Normal), then caches it. Technical data (node IDs, variant props, counts) stays 100% accurate in every mode. Hercules housekeeping (`state.write`, `episode.append`, `lesson.append`) and git operations always run in Ultra — nobody needs a story about an episode append.
 
 ---
 
-## Memory — Hermes harness
+## Memory — Hercules harness
 
-This project uses the **Hermes harness** for persistent memory instead of an external issue tracker. Everything lives locally in the repo under `.github/prompts/.hermes/`, reached through a single seam — `memory-adapter.md` — so the rest of the system never hard-codes where memory lives.
+This project uses the **Hercules harness** for persistent memory instead of an external issue tracker. Everything lives locally in the repo under `.github/prompts/.hercules/`, reached through a single seam — `memory-adapter.md` — so the rest of the system never hard-codes where memory lives.
 
 | File / dir           | Role                                                                     |
 | -------------------- | ------------------------------------------------------------------------ |
@@ -226,7 +227,7 @@ Rule files are **never** auto-edited without explicit approval. An empty sweep f
 | `/odin lessons` | Run the reconciliation sweep standalone (opens its own `open → close` episode pair) |
 | `/odin refine`  | Alias of `/odin lessons`                                                            |
 
-Read `.github/prompts/manifest.json` first on every invocation — it is the tiny skill→files map and the local analog of a Hermes skill-bundle.
+Read `.github/prompts/manifest.json` first on every invocation — it is the tiny skill→files map and the local analog of a Hercules skill-bundle.
 
 ---
 
@@ -265,7 +266,7 @@ Models are passed to `runSubagent` as `"<Model Name> (copilot)"`.
 | Python 3.10+                                        | Librarian token-lookup script         | ✅       |
 | `git` with access to the design-system source repos | Librarian mirror sync (private repos) | Optional |
 
-> The Hermes harness needs **no installation** — it is file-based and lives in `.github/prompts/.hermes/` inside this repo.
+> The Hercules harness needs **no installation** — it is file-based and lives in `.github/prompts/.hercules/` inside this repo.
 
 ---
 
@@ -313,11 +314,11 @@ MIMR uses the Figma REST API directly (for `sharedPluginData` access), which req
 Librarian queries a **local clone** of the external Token Studio JSON and KB repos rather than loading the large source files into context. To populate or refresh that mirror:
 
 ```bash
-bash .github/prompts/.hermes/sync-kb.sh          # refresh only if remote SHA changed
-bash .github/prompts/.hermes/sync-kb.sh --force  # re-pull regardless of SHA
+bash .github/prompts/.hercules/sync-kb.sh          # refresh only if remote SHA changed
+bash .github/prompts/.hercules/sync-kb.sh --force  # re-pull regardless of SHA
 ```
 
-The script does a sparse checkout of just the token/KB directories into `.github/prompts/.hermes/cache/` (gitignored) and records the synced SHAs in `cache/kb-manifest.json`. Re-running is idempotent — it prints `✓ up to date` when nothing changed.
+The script does a sparse checkout of just the token/KB directories into `.github/prompts/.hercules/cache/` (gitignored) and records the synced SHAs in `cache/kb-manifest.json`. Re-running is idempotent — it prints `✓ up to date` when nothing changed.
 
 > The design-system source repos are **private** — the sync needs authenticated git access (SSH key or `gh auth login`). Without access, Librarian falls back to the local `token-registry.md`.
 
@@ -330,7 +331,7 @@ git clone git@github.com:karlmalotabs/odin-9000-flow.git
 cd odin-9000-flow
 
 # (optional) prime the Librarian mirror
-bash .github/prompts/.hermes/sync-kb.sh
+bash .github/prompts/.hercules/sync-kb.sh
 ```
 
 Then open VS Code and type `/odin-9000` in Copilot Chat.
@@ -343,13 +344,13 @@ Then open VS Code and type `/odin-9000` in Copilot Chat.
 flowchart TD
     U["User: Figma URL or design brief"] --> O["/odin-9000"]
     O --> S1["1. Assess scope"]
-    S1 --> S2["2. Open Hermes run (state.write + episode open)"]
+    S1 --> S2["2. Open Hercules run (state.write + episode open)"]
     S2 --> M["/modi → wireframe → components"]
     M --> V["/vali → layout conversion"]
     V --> I["/mimr → token audit + writes"]
     I --> G["/saga → HTML + CSS or StencilJS"]
     G --> S3["3. Close run (episode close)"]
-    S3 --> OUT["Storybook-ready component folder<br/>+ full Hermes episode trail"]
+    S3 --> OUT["Storybook-ready component folder<br/>+ full Hercules episode trail"]
 ```
 
 Each sub-skill runs as an isolated subagent. ODIN forwards handoff contracts so downstream skills avoid redundant Figma reads:
@@ -364,7 +365,7 @@ Each sub-skill runs as an isolated subagent. ODIN forwards handoff contracts so 
 
 ```mermaid
 flowchart TD
-    F["FIGMA FILE<br/>(COMPONENT_SET + token bindings)"] --> O["/odin-9000<br/>orchestrates, opens Hermes run"]
+    F["FIGMA FILE<br/>(COMPONENT_SET + token bindings)"] --> O["/odin-9000<br/>orchestrates, opens Hercules run"]
     O --> MODI["MODI (wireframe)<br/>swaps shapes & instances to library components"]
     O --> VALI["VALI (layout)<br/>converts GROUPs to Auto Layout, renames layers"]
     O --> MIMR["MIMR (tokens)<br/>binds --fds-* vars to Figma nodes via NV"]
@@ -387,10 +388,10 @@ flowchart TD
 ```
 odin-9000-flow/
 ├── .github/
-│   ├── copilot-instructions.md        # Global Copilot + Hermes rules
+│   ├── copilot-instructions.md        # Global Copilot + Hercules rules
 │   └── prompts/
 │       ├── manifest.json              # Skill→files map + model routing (read FIRST)
-│       ├── .hermes/                   # Hermes harness (memory & run state)
+│       ├── .hercules/                   # Hercules harness (memory & run state)
 │       │   ├── memory-adapter.md      # The memory seam
 │       │   ├── episodes.jsonl         # open → close audit trail
 │       │   ├── lessons.jsonl          # durable agent lessons
@@ -486,11 +487,11 @@ Storybook picks up the story automatically if the project's `stories` glob cover
 ODIN Flow includes deterministic CLI tools that short-circuit the LLM for mechanical tasks,
 reducing pipeline time from ~22 minutes to ~2–3 minutes for a simple component.
 
-| Tool | Path | Purpose | Saves |
-|---|---|---|---|
-| `token-lookup.py --batch` | `mimr/scripts/` | Resolve multiple tokens in one call | ~15 LLM round-trips |
-| `generate-phase3.mjs` | `mimr/scripts/` | Stamp a write plan into a ready-to-run Figma plugin script | ~39 LLM calls / 10 min |
-| `generate-component-css.mjs` | `saga/scripts/` | Produce shadow-DOM CSS from a component spec JSON | ~11 re-reads + 117s generation |
+| Tool                         | Path            | Purpose                                                    | Saves                          |
+| ---------------------------- | --------------- | ---------------------------------------------------------- | ------------------------------ |
+| `token-lookup.py --batch`    | `mimr/scripts/` | Resolve multiple tokens in one call                        | ~15 LLM round-trips            |
+| `generate-phase3.mjs`        | `mimr/scripts/` | Stamp a write plan into a ready-to-run Figma plugin script | ~39 LLM calls / 10 min         |
+| `generate-component-css.mjs` | `saga/scripts/` | Produce shadow-DOM CSS from a component spec JSON          | ~11 re-reads + 117s generation |
 
 ### How they compose (optimized pipeline)
 

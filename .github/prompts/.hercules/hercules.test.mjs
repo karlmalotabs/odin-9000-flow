@@ -1,9 +1,9 @@
 /**
- * hermes.test.mjs — unit tests for the local Hermes backend.
+ * hercules.test.mjs — unit tests for the local Hercules backend.
  *
- *   node --test .github/prompts/.hermes/hermes.test.mjs
+ *   node --test .github/prompts/.hercules/hercules.test.mjs
  *
- * Each test runs the CLI in an isolated temp store via the HERMES_HOME env
+ * Each test runs the CLI in an isolated temp store via the HERCULES_HOME env
  * override, so the real episodes/lessons journals are never touched.
  */
 
@@ -15,19 +15,19 @@ import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const CLI = join(dirname(fileURLToPath(import.meta.url)), "hermes.mjs");
+const CLI = join(dirname(fileURLToPath(import.meta.url)), "hercules.mjs");
 
 /** Run the CLI in an isolated store; returns trimmed stdout. */
 function run(home, args, input) {
   return execFileSync("node", [CLI, ...args], {
-    env: { ...process.env, HERMES_HOME: home },
+    env: { ...process.env, HERCULES_HOME: home },
     input: input ?? "",
     encoding: "utf8",
   }).trim();
 }
 
 function tempHome() {
-  return mkdtempSync(join(tmpdir(), "hermes-"));
+  return mkdtempSync(join(tmpdir(), "hercules-"));
 }
 
 test("state write then read round-trips", () => {
@@ -259,7 +259,7 @@ test("util parse-figma-url uses the branch key for branch URLs", () => {
 });
 
 test("util resolve-model reads the real manifest routing table", () => {
-  // No HERMES_HOME override → resolves the real manifest one dir up from the CLI.
+  // No HERCULES_HOME override → resolves the real manifest one dir up from the CLI.
   const mimr = JSON.parse(
     execFileSync("node", [CLI, "util", "resolve-model", "mimr"], {
       encoding: "utf8",
@@ -278,9 +278,9 @@ test("util resolve-model reads the real manifest routing table", () => {
 test("session write/read/clear round-trips and gitignores the file", () => {
   const home = tempHome();
   // No .git here → falls back to PROMPTS_DIR (home/..). Use a nested git root.
-  const root = mkdtempSync(join(tmpdir(), "hermes-root-"));
+  const root = mkdtempSync(join(tmpdir(), "hercules-root-"));
   writeFileSync(join(root, ".gitignore"), "node_modules\n");
-  const hh = join(root, ".github", "prompts", ".hermes");
+  const hh = join(root, ".github", "prompts", ".hercules");
   rmSync(home, { recursive: true, force: true });
   execFileSync("node", [
     "-e",

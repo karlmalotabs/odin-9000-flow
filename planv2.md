@@ -117,7 +117,7 @@ PRIOR_SCAN handoff). Waste is concentrated here:
 - Manifest claims "intentionally tiny" but long descriptions also live in prompt frontmatter.
 - Fix: keep manifest to one-line `role` + `loadWhen`; don't let long descriptions creep in.
 
-### B5. Hermes 6-step boilerplate repeats in all five workers
+### B5. Hercules 6-step boilerplate repeats in all five workers
 - Could compress to ~2 lines + "see memory-adapter" and rely on the adapter defining
   `lesson.recall` / `episode.append` once.
 
@@ -147,7 +147,7 @@ PRIOR_SCAN handoff). Waste is concentrated here:
 5. **Structural token savings (optional, larger refactor)**
    - [ ] B3 — collapse stub/full prompt indirection.
    - [ ] B4 — strip long descriptions from manifest/frontmatter overlap.
-   - [ ] B5 — compress Hermes boilerplate across workers.
+   - [ ] B5 — compress Hercules boilerplate across workers.
 6. **Housekeeping**
    - [x] A8 — PAT storage note.
    - [ ] Re-verify C (manifest ↔ ODIN ↔ README) after any routing touch.
@@ -155,5 +155,5 @@ PRIOR_SCAN handoff). Waste is concentrated here:
 ## Notes / guardrails
 - All current working-tree edits remain **staged/uncommitted** per prior instruction — do not
   commit/push without asking.
-- Every Figma write needs an `open → close` episode pair (Hermes rule). Prompt edits here are
+- Every Figma write needs an `open → close` episode pair (Hercules rule). Prompt edits here are
   doc-only (no Figma writes), so no episode pair required for the editing work itself.

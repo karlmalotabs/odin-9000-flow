@@ -85,11 +85,11 @@ Librarian answers token/KB lookups from a **local clone** of the external Token 
 KB repos, so the large source files never enter the model context.
 
 ```bash
-bash .github/prompts/.hermes/sync-kb.sh          # refresh only if the remote SHA changed
-bash .github/prompts/.hermes/sync-kb.sh --force  # re-pull regardless of SHA
+bash .github/prompts/.hercules/sync-kb.sh          # refresh only if the remote SHA changed
+bash .github/prompts/.hercules/sync-kb.sh --force  # re-pull regardless of SHA
 ```
 
-This sparse-checks-out only the token/KB directories into `.github/prompts/.hermes/cache/`
+This sparse-checks-out only the token/KB directories into `.github/prompts/.hercules/cache/`
 (gitignored) and records the synced SHAs in `cache/kb-manifest.json`.
 
 > The design-system source repos are **private** — the sync needs authenticated git access
@@ -284,7 +284,7 @@ Kevin changes _how_ responses are narrated, never _what_ the agent does. It is *
 
 On the first skill invocation per session Kevin asks once which mode to use (default: Normal),
 then caches it. Technical data (node IDs, variant props, counts) stays 100% accurate in every
-mode; Hermes housekeeping and git operations are always narrated in Ultra.
+mode; Hercules housekeeping and git operations are always narrated in Ultra.
 
 ---
 
@@ -316,7 +316,7 @@ mode; Hermes housekeeping and git operations are always narrated in Ultra.
 | ------------------------------------------------------------ | ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
 | ODIN says Figma MCP is unavailable                           | Extension not signed in, or no Copilot Chat session yet            | Run **"Figma: Sign In"**, reopen Chat; ODIN re-probes with `get_metadata`                                                        |
 | MIMR fails with `401`/`403`                                  | Expired or wrong PAT                                               | Let ODIN delete `.odin-session` and paste a fresh `figd_` token                                                                  |
-| Librarian can't find tokens                                  | No access to the private design-system repos, or mirror not primed | `gh auth login` (or add SSH key), then `bash .github/prompts/.hermes/sync-kb.sh`; otherwise it falls back to `token-registry.md` |
+| Librarian can't find tokens                                  | No access to the private design-system repos, or mirror not primed | `gh auth login` (or add SSH key), then `bash .github/prompts/.hercules/sync-kb.sh`; otherwise it falls back to `token-registry.md` |
 | `sync-kb.sh` says "specify directories rather than patterns" | Passed a glob to sparse-checkout                                   | Use a directory (`data`), not `data/*`                                                                                           |
 | Large frame: audit truncated                                 | Response exceeded the size budget                                  | ODIN/MIMR re-fetch with `get_metadata` then narrow to specific nodes; or sample variants                                         |
 | Token JSON not found by code search                          | The large `ts-*.json` files aren't indexed remotely                | Use the local mirror via Librarian — they live under `cache/tokens/data/`                                                        |

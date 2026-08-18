@@ -1,10 +1,10 @@
 # ODIN Flow — Internals
 
-> **Audience:** engineers who want to *understand and extend* ODIN Flow.
+> **Audience:** engineers who want to _understand and extend_ ODIN Flow.
 > For how to run it, see [../use/USAGE.md](../use/USAGE.md).
 
 ODIN Flow is a set of GitHub Copilot **agent skills** (prompt files + Figma Plugin API scripts +
-rule data) coordinated by an orchestrator, with a local file-based memory harness (Hermes). There
+rule data) coordinated by an orchestrator, with a local file-based memory harness (Hercules). There
 is no server and no build step — everything is Markdown, JSON, JS scripts, and JSONL state under
 `.github/`.
 
@@ -18,7 +18,7 @@ is no server and no build step — everything is Markdown, JSON, JS scripts, and
 4. [Prompt & agent structure](#4-prompt--agent-structure)
 5. [ODIN orchestration loop](#5-odin-orchestration-loop)
 6. [Model routing & escalation](#6-model-routing--escalation)
-7. [The Hermes harness](#7-the-hermes-harness)
+7. [The Hercules harness](#7-the-hercules-harness)
 8. [Self-improvement loop (lesson reconciliation)](#8-self-improvement-loop-lesson-reconciliation)
 9. [Librarian & sync-kb.sh](#9-librarian--sync-kbsh)
 10. [Token model — TS vs NV](#10-token-model--ts-vs-nv)
@@ -44,7 +44,7 @@ graph TD
     saga["SAGA agent + prompt"]
     lib["Librarian agent<br/>+ sync-kb.sh"]
     kevin["Kevin<br/>persona overlay"]
-    store[".hermes/ store<br/>episodes · lessons · state · cache"]
+    store[".hercules/ store<br/>episodes · lessons · state · cache"]
     figma[("Figma<br/>MCP + REST")]
 
     manifest --> odin
@@ -113,14 +113,14 @@ Three layers:
       data/     token-registry.md · token-index.json · mapping-rules.md
     saga/
       saga.prompt.md
-    .hermes/
+    .hercules/
       memory-adapter.md          # the seam
       episodes.jsonl             # run journal (committed)
       lessons.jsonl              # distilled insights (committed)
       sync-kb.sh                 # Librarian mirror refresh
       state/<runId>.json         # live run state (gitignored)
       cache/<key>.json           # version-keyed caches (gitignored)
-AGENTS.md · CLAUDE.md            # agent-facing repo rules (Hermes integration)
+AGENTS.md · CLAUDE.md            # agent-facing repo rules (Hercules integration)
 README.md                        # entry point
 docs/use/USAGE.md · docs/tech/INTERNALS.md
 src/components/fds-*/            # SAGA output lives here
@@ -140,18 +140,18 @@ tiny so it is never skipped; full prompts and scripts load lazily.
 
 ### `skills.<name>`
 
-| Field | Meaning |
-|---|---|
-| `role` | One-line purpose. |
-| `prompt` | Path to the full `.prompt.md` (null for ODIN's own entry / Librarian). |
-| `agent` | Path to the `.agent.md` subagent definition (null for ODIN + Kevin). |
-| `model` | Durable default model (mirrors the agent frontmatter). |
-| `escalateTo` | Optional `{ "<Model>": "trigger condition" }` — a per-task upgrade. |
-| `scripts` | Array of `.figma.js` / `.py` files the worker must read before any Plugin API call. |
-| `data` | Array of rule/reference files (`.md` / `.json`). |
-| `loadWhen` | Human-readable trigger describing when ODIN should run this skill. |
-| `controls` | (ODIN only) slash subcommands — `/odin lessons`, `/odin refine`. |
-| `sync` | (Librarian only) external repo coordinates for `sync-kb.sh`. |
+| Field        | Meaning                                                                             |
+| ------------ | ----------------------------------------------------------------------------------- |
+| `role`       | One-line purpose.                                                                   |
+| `prompt`     | Path to the full `.prompt.md` (null for ODIN's own entry / Librarian).              |
+| `agent`      | Path to the `.agent.md` subagent definition (null for ODIN + Kevin).                |
+| `model`      | Durable default model (mirrors the agent frontmatter).                              |
+| `escalateTo` | Optional `{ "<Model>": "trigger condition" }` — a per-task upgrade.                 |
+| `scripts`    | Array of `.figma.js` / `.py` files the worker must read before any Plugin API call. |
+| `data`       | Array of rule/reference files (`.md` / `.json`).                                    |
+| `loadWhen`   | Human-readable trigger describing when ODIN should run this skill.                  |
+| `controls`   | (ODIN only) slash subcommands — `/odin lessons`, `/odin refine`.                    |
+| `sync`       | (Librarian only) external repo coordinates for `sync-kb.sh`.                        |
 
 ### Top-level blocks
 
@@ -161,8 +161,8 @@ tiny so it is never skipped; full prompts and scripts load lazily.
 - **`pipelineOrder`** — `["modi", "vali", "mimr", "saga"]`, the sequence when all are needed.
 - **`handoffContracts`** — the short strings describing what each stage forwards to the next. See
   [§13](#13-handoff-contracts).
-- **`bundle`** — a mirror of a Hermes "skill-bundle" (`{name, description, skills[], instruction}`)
-  so the manifest can be emitted verbatim when syncing to a real Hermes install.
+- **`bundle`** — a mirror of a Hercules "skill-bundle" (`{name, description, skills[], instruction}`)
+  so the manifest can be emitted verbatim when syncing to a real Hercules install.
 
 ---
 
@@ -186,9 +186,9 @@ own full prompt when ODIN dispatches it.
 ---
 name: "MIMR"
 description: "MIMR worker subagent … NOT FOR: HTML/CSS code generation"
-model: "Claude Sonnet 4.6"          # durable default
+model: "Claude Sonnet 4.6" # durable default
 tools: [read, search, execute, figma/*]
-user-invocable: false                # true only for entry-point agents
+user-invocable: false # true only for entry-point agents
 argument-hint: "Figma frame URL or node id + scope"
 ---
 ```
@@ -201,7 +201,7 @@ seam, and lessons are always loaded before work:
 ```text
 ## Boot (every invocation, in order)
 1. Read .github/prompts/manifest.json → resolve your file list under skills.<name>.
-2. Read .github/prompts/.hermes/memory-adapter.md.
+2. Read .github/prompts/.hercules/memory-adapter.md.
 3. lesson.recall(["<name>"]) and honour returned lessons.
 4. Load and follow .github/prompts/<name>/<name>.prompt.md — single source of truth.
 
@@ -218,14 +218,14 @@ must confirm it actually read its scripts before issuing any `use_figma` call.
 ## 5. ODIN orchestration loop
 
 `.github/prompts/odin-9000/odin-9000.prompt.md` implements a Plan→Choose→Execute→Observe→Refine
-loop wrapped in Hermes open/close bookkeeping.
+loop wrapped in Hercules open/close bookkeeping.
 
 ```mermaid
 sequenceDiagram
     autonumber
     participant U as User
     participant O as ODIN-9000
-    participant M as Memory (Hermes)
+    participant M as Memory (Hercules)
     participant W as Worker subagent
     participant F as Figma
 
@@ -268,7 +268,7 @@ sequenceDiagram
 5. **Refine** — if observations invalidate the plan, update `state.plan[]` and continue.
 6. **Close** — set `status:"done"` + `outcome` + `summary`; `episode.append({phase:"close"})`;
    **then run the lesson sweep** (see [§8](#8-self-improvement-loop-lesson-reconciliation)).
-   *Closing always means close **and** reconcile.*
+   _Closing always means close **and** reconcile._
 
 Dispatch passes only the slice a worker needs plus handoff data — workers run in isolated context
 and return compact digests, keeping the orchestrator context small.
@@ -291,19 +291,19 @@ flowchart TD
 
 ### Defaults
 
-| Skill | Default | Escalates to | Trigger |
-|---|---|---|---|
-| Librarian | Claude Haiku 4.5 | — | — |
-| MODI | Claude Haiku 4.5 | Claude Sonnet 4.6 | ambiguous variant mapping / non-trivial resolution |
-| VALI | Claude Sonnet 4.6 | — | — |
-| MIMR | Claude Sonnet 4.6 | Claude Opus 4.8 | large or ambiguous conflict audit |
-| SAGA | Claude Sonnet 4.6 | Claude Opus 4.8 | complex multi-state / multi-variant codegen |
-| **ODIN** | **Claude Opus 4.8** | — | — |
+| Skill     | Default             | Escalates to      | Trigger                                            |
+| --------- | ------------------- | ----------------- | -------------------------------------------------- |
+| Librarian | Claude Haiku 4.5    | —                 | —                                                  |
+| MODI      | Claude Haiku 4.5    | Claude Sonnet 4.6 | ambiguous variant mapping / non-trivial resolution |
+| VALI      | Claude Sonnet 4.6   | —                 | —                                                  |
+| MIMR      | Claude Sonnet 4.6   | Claude Opus 4.8   | large or ambiguous conflict audit                  |
+| SAGA      | Claude Sonnet 4.6   | Claude Opus 4.8   | complex multi-state / multi-variant codegen        |
+| **ODIN**  | **Claude Opus 4.8** | —                 | —                                                  |
 
 ### Resolution order
 
 1. **Per-task escalation** — if the step matches `skills.<name>.escalateTo`, the escalated model is
-   a *candidate* (requires approval, below).
+   a _candidate_ (requires approval, below).
 2. **Frontmatter default** — otherwise the agent's pinned `model:`.
 3. **Downgrade** — for trivial steps a Sonnet default may drop to Haiku (no confirmation).
 
@@ -319,34 +319,34 @@ is passed to `runSubagent` as `model: "<Name> (copilot)"`.
 
 ---
 
-## 7. The Hermes harness
+## 7. The Hercules harness
 
-The **Hermes harness** is a local, file-based memory system reached through a single seam:
-`.github/prompts/.hermes/memory-adapter.md`. Skills **never** touch `.hermes/` paths directly —
+The **Hercules harness** is a local, file-based memory system reached through a single seam:
+`.github/prompts/.hercules/memory-adapter.md`. Skills **never** touch `.hercules/` paths directly —
 they call verbs. Only the adapter's "Backend binding" table knows the physical location, so a
-later migration to an external Hermes service changes only that table.
+later migration to an external Hercules service changes only that table.
 
 ### Verbs
 
-| Verb | Signature → returns | Local backend |
-|---|---|---|
-| `state.read(runId)` | `(runId) → StateObject` | read `state/<runId>.json` |
-| `state.write(runId, obj)` | `(runId, obj) → void` | write `state/<runId>.json` |
-| `episode.append(ev)` | `(ev) → void` | append one line to `episodes.jsonl` |
-| `lesson.append(le)` | `(le) → void` | append one line to `lessons.jsonl` |
-| `lesson.recall(tags)` | `(tags[]) → Lesson[]` | grep `lessons.jsonl` by `skill`/`tags` |
-| `lesson.sweep(filter?)` | `(filter?) → Map<file, Lesson[]>` | entries with `applied=false` **and** non-null `ruleProposal`, grouped by `ruleProposal.file`, near-dupes collapsed (same `skill`+`file`+similar `lesson`) |
-| `lesson.update(matcher, patch)` | `(matcher, patch) → void` | in-place JSONL rewrite — read all, patch matched object(s), write back (one object per line) |
-| `cache.read(key)` | `(key) → CacheEntry` | read `cache/<key>.json` |
-| `cache.write(key, obj)` | `(key, obj) → void` | write `cache/<key>.json` |
-| `cache.valid(key, ver)` | `(key, ver) → bool` | compare stored `version` vs `ver` |
+| Verb                            | Signature → returns               | Local backend                                                                                                                                             |
+| ------------------------------- | --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `state.read(runId)`             | `(runId) → StateObject`           | read `state/<runId>.json`                                                                                                                                 |
+| `state.write(runId, obj)`       | `(runId, obj) → void`             | write `state/<runId>.json`                                                                                                                                |
+| `episode.append(ev)`            | `(ev) → void`                     | append one line to `episodes.jsonl`                                                                                                                       |
+| `lesson.append(le)`             | `(le) → void`                     | append one line to `lessons.jsonl`                                                                                                                        |
+| `lesson.recall(tags)`           | `(tags[]) → Lesson[]`             | grep `lessons.jsonl` by `skill`/`tags`                                                                                                                    |
+| `lesson.sweep(filter?)`         | `(filter?) → Map<file, Lesson[]>` | entries with `applied=false` **and** non-null `ruleProposal`, grouped by `ruleProposal.file`, near-dupes collapsed (same `skill`+`file`+similar `lesson`) |
+| `lesson.update(matcher, patch)` | `(matcher, patch) → void`         | in-place JSONL rewrite — read all, patch matched object(s), write back (one object per line)                                                              |
+| `cache.read(key)`               | `(key) → CacheEntry`              | read `cache/<key>.json`                                                                                                                                   |
+| `cache.write(key, obj)`         | `(key, obj) → void`               | write `cache/<key>.json`                                                                                                                                  |
+| `cache.valid(key, ver)`         | `(key, ver) → bool`               | compare stored `version` vs `ver`                                                                                                                         |
 
 `BACKEND=local` is the only supported value today.
 
 ### Store layout & what is committed
 
 ```text
-.hermes/
+.hercules/
   memory-adapter.md      # the seam
   episodes.jsonl         # run journal               (COMMITTED)
   lessons.jsonl          # distilled insights        (COMMITTED)
@@ -363,26 +363,34 @@ knowledge). `state/` and `cache/` are gitignored via `state/.gitignore` and `cac
 
 **State — `state/<runId>.json`**
 
-| Field | Meaning |
-|---|---|
-| `runId` | `odin-<yyyymmdd-hhmmss>`. |
-| `goal` | One-line objective. |
-| `frameUrl` / `fileKey` / `nodeId` | Figma target coordinates. |
-| `patRef` | Reference to the PAT (`".odin-session"`) — **never inline the token**. |
-| `plan[]` | `{ skill, why }` planned steps. |
-| `done[]` | `{ skill, digest/digestRef, at }` completed steps. |
-| `observations[]` | Findings from the Observe phase. |
-| `openIssues[]` | Unfinished work — triggers a new `runId` if continued. |
-| `status` | `active \| paused \| done \| cleared`. |
-| `outcome` | (set at close) `complete \| blocked \| failed \| timeout \| reclaimed`. |
-| `summary` | One-line handoff for the next worker. |
+| Field                             | Meaning                                                                 |
+| --------------------------------- | ----------------------------------------------------------------------- |
+| `runId`                           | `odin-<yyyymmdd-hhmmss>`.                                               |
+| `goal`                            | One-line objective.                                                     |
+| `frameUrl` / `fileKey` / `nodeId` | Figma target coordinates.                                               |
+| `patRef`                          | Reference to the PAT (`".odin-session"`) — **never inline the token**.  |
+| `plan[]`                          | `{ skill, why }` planned steps.                                         |
+| `done[]`                          | `{ skill, digest/digestRef, at }` completed steps.                      |
+| `observations[]`                  | Findings from the Observe phase.                                        |
+| `openIssues[]`                    | Unfinished work — triggers a new `runId` if continued.                  |
+| `status`                          | `active \| paused \| done \| cleared`.                                  |
+| `outcome`                         | (set at close) `complete \| blocked \| failed \| timeout \| reclaimed`. |
+| `summary`                         | One-line handoff for the next worker.                                   |
 
 **Episode — one line in `episodes.jsonl`**
 
 ```json
-{ "ts": "ISO8601", "runId": "...", "skill": "mimr", "phase": "close",
-  "summary": "Bound 308 nodes, 2 conflicts resolved", "result": "ok",
-  "outcome": "complete", "writes": 308, "frame": "FDS-Badge" }
+{
+  "ts": "ISO8601",
+  "runId": "...",
+  "skill": "mimr",
+  "phase": "close",
+  "summary": "Bound 308 nodes, 2 conflicts resolved",
+  "result": "ok",
+  "outcome": "complete",
+  "writes": 308,
+  "frame": "FDS-Badge"
+}
 ```
 
 `phase ∈ open | step | observe | close`. `result ∈ ok | error` (execution status). `outcome`
@@ -392,11 +400,19 @@ needs one.
 **Lesson — one line in `lessons.jsonl`**
 
 ```json
-{ "ts": "ISO8601", "skill": "mimr", "tags": ["padding","conflict"],
+{
+  "ts": "ISO8601",
+  "skill": "mimr",
+  "tags": ["padding", "conflict"],
   "trigger": "what went wrong / was corrected",
   "lesson": "actionable rule, imperative voice",
-  "ruleProposal": { "file": "mimr/data/mapping-rules.md", "diff": "optional unified diff" },
-  "applied": false, "appliedAt": null }
+  "ruleProposal": {
+    "file": "mimr/data/mapping-rules.md",
+    "diff": "optional unified diff"
+  },
+  "applied": false,
+  "appliedAt": null
+}
 ```
 
 `trigger` is the diagnosis; `lesson` is the imperative rule; `ruleProposal` (optional) points at a
@@ -409,8 +425,12 @@ reconciliation flag (missing = `false`); `appliedAt` is stamped by `lesson.updat
 **Cache — `cache/<key>.json`**
 
 ```json
-{ "key": "vars-<fileKey>-<version>", "version": "<figma file version>",
-  "builtAt": "ISO8601", "data": { } }
+{
+  "key": "vars-<fileKey>-<version>",
+  "version": "<figma file version>",
+  "builtAt": "ISO8601",
+  "data": {}
+}
 ```
 
 Key convention `<kind>-<fileKey>-<nodeId?>-<version>`. `cache.valid` returns false when the stored
@@ -418,9 +438,9 @@ Key convention `<kind>-<fileKey>-<nodeId?>-<version>`. `cache.valid` returns fal
 
 ### Why these names
 
-The local backend deliberately mirrors a future external Hermes: a `runId` maps to a
+The local backend deliberately mirrors a future external Hercules: a `runId` maps to a
 `kanban_db.Run` row (open/close = claim/close; `outcome`/`summary`/`error` are the same columns),
-and the ODIN loop mirrors the Hermes "Ralph loop" (`goals.py`) — hence `state.status` reuses
+and the ODIN loop mirrors the Hercules "Ralph loop" (`goals.py`) — hence `state.status` reuses
 `active|paused|done|cleared`. Keeping the analogy intact makes the eventual swap a near drop-in.
 
 ---
@@ -479,7 +499,7 @@ Librarian is a read-only subagent that owns the large external Token Studio JSON
 a narrow query interface — it returns matched rows, never whole files, so multi-megabyte sources
 never enter context.
 
-It keeps a **local mirror** under `.hermes/cache/`, refreshed by `sync-kb.sh` with a cheap
+It keeps a **local mirror** under `.hercules/cache/`, refreshed by `sync-kb.sh` with a cheap
 staleness check.
 
 ```mermaid
@@ -496,18 +516,18 @@ flowchart LR
 Coordinates live in `manifest.json → skills.librarian.sync` (and as env-overridable defaults in the
 script header):
 
-| Source | Repo | Branch | Path |
-|---|---|---|---|
-| Token JSON | `<org>/core-design-system-variables` | `main` | `data` |
-| KB docs | `<org>/kb-docs` | `feat/fds-token-docs-refactor` | `knowledge/shared/global/design-standards/tokens` |
+| Source     | Repo                                 | Branch                         | Path                                              |
+| ---------- | ------------------------------------ | ------------------------------ | ------------------------------------------------- |
+| Token JSON | `<org>/core-design-system-variables` | `main`                         | `data`                                            |
+| KB docs    | `<org>/kb-docs`                      | `feat/fds-token-docs-refactor` | `knowledge/shared/global/design-standards/tokens` |
 
-Clone target: `.github/prompts/.hermes/cache`; manifest: `cache/kb-manifest.json`.
+Clone target: `.github/prompts/.hercules/cache`; manifest: `cache/kb-manifest.json`.
 
 ### Behaviour
 
 ```bash
-bash .github/prompts/.hermes/sync-kb.sh          # pull only if remote SHA differs
-bash .github/prompts/.hermes/sync-kb.sh --force   # always re-pull
+bash .github/prompts/.hercules/sync-kb.sh          # pull only if remote SHA differs
+bash .github/prompts/.hercules/sync-kb.sh --force   # always re-pull
 ```
 
 - **Staleness probe** — `git ls-remote <url> refs/heads/<branch>` vs the cached SHA in
@@ -519,7 +539,7 @@ bash .github/prompts/.hermes/sync-kb.sh --force   # always re-pull
 ### Cache layout
 
 ```text
-.hermes/cache/
+.hercules/cache/
   tokens/data/      ts-core-fabric.json, ts-alta-fabric.json, …
   kb/knowledge/shared/global/design-standards/tokens/   *.md
   kb-manifest.json  { tokens:{sha,path,syncedAt}, kb:{…} }
@@ -539,12 +559,12 @@ bash .github/prompts/.hermes/sync-kb.sh --force   # always re-pull
 
 FDS tokens reach Figma nodes two ways, and MIMR handles both:
 
-| | Token Studio (TS) | Native Variables (NV) |
-|---|---|---|
-| Storage | `node.getSharedPluginData('tokens', key)` | `node.boundVariables[prop]` |
-| Shape | `{ key: "dot.path.value" }` | `{ prop: VariableID | [VariableID] }` |
-| Read by | Figma REST API (`plugin_data=shared`) + Plugin API | Plugin API (`getVariableByIdAsync`) |
-| Example key | `fill`, `verticalPadding`, `borderRadius` | `fills`, `paddingTop`, `cornerRadius` |
+|             | Token Studio (TS)                                  | Native Variables (NV)                 |
+| ----------- | -------------------------------------------------- | ------------------------------------- | --------------- |
+| Storage     | `node.getSharedPluginData('tokens', key)`          | `node.boundVariables[prop]`           |
+| Shape       | `{ key: "dot.path.value" }`                        | `{ prop: VariableID                   | [VariableID] }` |
+| Read by     | Figma REST API (`plugin_data=shared`) + Plugin API | Plugin API (`getVariableByIdAsync`)   |
+| Example key | `fill`, `verticalPadding`, `borderRadius`          | `fills`, `paddingTop`, `cornerRadius` |
 
 A TS value prefixed `var.fds.*` signals **intended NV binding** — MIMR converts the dot path to a
 slash path, resolves the variable by name, and binds it. When a TS path maps 1:1 to an NV variable
@@ -577,26 +597,65 @@ variable resolution + anomaly detection in one pass).
 
 ```js
 // injection
-const ROOT_ID    = "8866:76128";  // COMPONENT_SET or FRAME (colon format)
-const MAX_DEPTH  = 4;
-const SAMPLE_IDS = null;          // null = all; ["id", …] = sampled variants
-const PRIOR_SCAN = null;          // [{id,type}, …] from VALI → skip the tree walk
+const ROOT_ID = "8866:76128"; // COMPONENT_SET or FRAME (colon format)
+const MAX_DEPTH = 4;
+const SAMPLE_IDS = null; // null = all; ["id", …] = sampled variants
+const PRIOR_SCAN = null; // [{id,type}, …] from VALI → skip the tree walk
 ```
 
 Returns (target < 8 KB):
 
 ```json
 {
-  "root":   { "id": "", "name": "", "type": "", "childCount": 0 },
-  "stats":  { "total": 0, "withTS": 0, "withNV": 0, "conflicts": 0,
-              "instances": 0, "unbound": 0, "sampled": 0 },
+  "root": { "id": "", "name": "", "type": "", "childCount": 0 },
+  "stats": {
+    "total": 0,
+    "withTS": 0,
+    "withNV": 0,
+    "conflicts": 0,
+    "instances": 0,
+    "unbound": 0,
+    "sampled": 0
+  },
   "varMap": { "VariableID:abc": "shortName" },
-  "matrix": [ { "variant": "", "n": 0, "fill_ts": "", "fill_nv": "",
-                "border_ts": "", "border_nv": "", "text_fill_ts": "", "text_fill_nv": "" } ],
-  "sizes":  [ { "size": "", "n": 0, "vpad_ts": "", "vpad_nv": "", "hpad_ts": "", "hpad_nv": "",
-                "gap_ts": "", "gap_nv": "", "radius_ts": "", "radius_nv": "",
-                "stroke_ts": "", "stroke_nv": "", "typography_ts": "" } ],
-  "issues": [ { "code": "", "severity": "", "scope": "", "detail": "", "affectedCount": 0 } ],
+  "matrix": [
+    {
+      "variant": "",
+      "n": 0,
+      "fill_ts": "",
+      "fill_nv": "",
+      "border_ts": "",
+      "border_nv": "",
+      "text_fill_ts": "",
+      "text_fill_nv": ""
+    }
+  ],
+  "sizes": [
+    {
+      "size": "",
+      "n": 0,
+      "vpad_ts": "",
+      "vpad_nv": "",
+      "hpad_ts": "",
+      "hpad_nv": "",
+      "gap_ts": "",
+      "gap_nv": "",
+      "radius_ts": "",
+      "radius_nv": "",
+      "stroke_ts": "",
+      "stroke_nv": "",
+      "typography_ts": ""
+    }
+  ],
+  "issues": [
+    {
+      "code": "",
+      "severity": "",
+      "scope": "",
+      "detail": "",
+      "affectedCount": 0
+    }
+  ],
   "fromPriorScan": false
 }
 ```
@@ -678,13 +737,28 @@ echo '<spec-json>' | node generate-component-css.mjs --name fds-bonus-bar --out 
 ```
 
 Input spec shape:
+
 ```json
 {
   "shadow": true,
-  "host": { "tokens": { "paddingH": {"var":"--fds-*","fallback":"20px"} } },
+  "host": {
+    "tokens": { "paddingH": { "var": "--fds-*", "fallback": "20px" } }
+  },
   "nodes": [
-    { "class": "card", "layout": "flex-col", "tokens": { "background": {"var":"--fds-info","fallback":"#608df2"} } },
-    { "class": "subtitle", "typography": {"fontFamily":"Open Sans","fontSize":"12px","lineHeight":"16px","fontWeight":"400"} }
+    {
+      "class": "card",
+      "layout": "flex-col",
+      "tokens": { "background": { "var": "--fds-info", "fallback": "#608df2" } }
+    },
+    {
+      "class": "subtitle",
+      "typography": {
+        "fontFamily": "Open Sans",
+        "fontSize": "12px",
+        "lineHeight": "16px",
+        "fontWeight": "400"
+      }
+    }
   ]
 }
 ```
@@ -698,8 +772,8 @@ rules the template can't express (variant states, media queries, animations).
 
 ```js
 const NODE_ID = "8373:54941";
-const DEPTH   = 5;
-const SAMPLE  = 0;  // 0 = scan all; N>0 = explicit sample count
+const DEPTH = 5;
+const SAMPLE = 0; // 0 = scan all; N>0 = explicit sample count
 ```
 
 For COMPONENT_SETs > 20 children it fingerprints every variant
@@ -730,8 +804,8 @@ across all variants, substituting `{VARIANT_ID}` and `{CHILD:N:ID}` placeholders
 
 ```js
 const NODE_ID = "8914:78154";
-const MODE = "parse";     // "parse" | "swap"
-const SOURCE_KEY = null;  // swap mode only
+const MODE = "parse"; // "parse" | "swap"
+const SOURCE_KEY = null; // swap mode only
 const MAX_DEPTH = 10;
 ```
 
@@ -766,7 +840,7 @@ and updates variant props. Both restore captured sizing. Returns
     - type: ts
       key: "fill"
       value: "var.fds.fds-surface-variant"
-      rawValue: "#1a1a2e"        # optional fallback
+      rawValue: "#1a1a2e" # optional fallback
     - type: nv
       prop: "fills"
       varId: "VariableID:…"
@@ -796,10 +870,11 @@ named sub-frames → `section`; all leaves → `pattern`.
 ```yaml
 - name: "FDS-Input"
   componentKey: "519c…"
-  nodeId: "8556:55146"          # local only
+  nodeId: "8556:55146" # local only
   file: "Ahvbwk0dUHeHazrQX2XtGd" # local only
   library: "🧣 DS Fabric Components (WIP)"
-  axes: { State: [Default, Filled, Error, Disabled], Size: [Small, Medium, Large] }
+  axes:
+    { State: [Default, Filled, Error, Disabled], Size: [Small, Medium, Large] }
   defaultVariantKey: "b7357…"
   scanned: "2026-04-27"
 ```
@@ -863,7 +938,7 @@ gated promotion — never auto-applied.
 ## 15. Conventions & invariants
 
 - **Read `manifest.json` first** on every invocation — it is the tiny skill→files map.
-- **The seam is sacred** — reach memory only through adapter verbs; never hardcode `.hermes/` paths
+- **The seam is sacred** — reach memory only through adapter verbs; never hardcode `.hercules/` paths
   outside `memory-adapter.md`.
 - **One JSON object per JSONL line** — `lesson.update` and any rewrite must preserve this; the file
   must still parse line-by-line afterward.
@@ -879,17 +954,17 @@ gated promotion — never auto-applied.
 
 ## 16. Glossary
 
-| Term | Meaning |
-|---|---|
-| **ODIN-9000** | The orchestrator skill; runs the Plan→Choose→Execute→Observe→Refine loop. |
-| **Worker** | A dispatched subagent (MODI/VALI/MIMR/SAGA) running in isolated context. |
-| **Hermes harness** | The local file-based memory system under `.hermes/`. |
-| **Seam** | `memory-adapter.md` — the single indirection point for memory. |
-| **Verb** | A memory operation (`state.*`, `episode.*`, `lesson.*`, `cache.*`). |
-| **Episode** | One `open/step/observe/close` audit line in `episodes.jsonl`. |
-| **Lesson** | A durable insight in `lessons.jsonl`, optionally with a `ruleProposal`. |
-| **Reconciliation** | The gated sweep that promotes pending lessons into rule files. |
-| **TS / NV** | Token Studio (`sharedPluginData`) vs Native Variables (`boundVariables`). |
-| **PRIOR_SCAN** | VALI's node list forwarded to MIMR to skip a tree walk. |
-| **Fingerprint** | A structural signature VALI uses to dedupe identical variants. |
-| **Placeholder** | A wireframe shape/childless-FRAME MODI resolves to a real component. |
+| Term               | Meaning                                                                   |
+| ------------------ | ------------------------------------------------------------------------- |
+| **ODIN-9000**      | The orchestrator skill; runs the Plan→Choose→Execute→Observe→Refine loop. |
+| **Worker**         | A dispatched subagent (MODI/VALI/MIMR/SAGA) running in isolated context.  |
+| **Hercules harness** | The local file-based memory system under `.hercules/`.                      |
+| **Seam**           | `memory-adapter.md` — the single indirection point for memory.            |
+| **Verb**           | A memory operation (`state.*`, `episode.*`, `lesson.*`, `cache.*`).       |
+| **Episode**        | One `open/step/observe/close` audit line in `episodes.jsonl`.             |
+| **Lesson**         | A durable insight in `lessons.jsonl`, optionally with a `ruleProposal`.   |
+| **Reconciliation** | The gated sweep that promotes pending lessons into rule files.            |
+| **TS / NV**        | Token Studio (`sharedPluginData`) vs Native Variables (`boundVariables`). |
+| **PRIOR_SCAN**     | VALI's node list forwarded to MIMR to skip a tree walk.                   |
+| **Fingerprint**    | A structural signature VALI uses to dedupe identical variants.            |
+| **Placeholder**    | A wireframe shape/childless-FRAME MODI resolves to a real component.      |

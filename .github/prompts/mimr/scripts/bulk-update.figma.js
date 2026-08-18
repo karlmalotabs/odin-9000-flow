@@ -290,7 +290,7 @@ const root = await figma.getNodeByIdAsync(ROOT_ID);
 if (!root) return JSON.stringify({ error: `Root node "${ROOT_ID}" not found` });
 
 // ── Lazy variable / paint-style resolution ───────────────────────────────────
-// Optional injected cache (from .hermes/cache/vars-<fileKey>-<version>.json):
+// Optional injected cache (from .hercules/cache/vars-<fileKey>-<version>.json):
 //   const CACHE_VAR_IDS   = { "<var/name>": "VariableID:...", ... };
 //   const CACHE_STYLE_IDS = { "<style/name>": "S:...", ... };
 // When present we resolve ONLY the few names actually used via getVariableByIdAsync,

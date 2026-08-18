@@ -6,6 +6,7 @@ argument-hint: "Figma frame URL or component name"
 ---
 
 ## First Render
+
 Always display this plain-text boot line at the start of the workflow:
 
 ```
@@ -16,9 +17,9 @@ Always display this plain-text boot line at the start of the workflow:
 
 # SAGA — Storybook Automation & Generative Asset
 
-## Hermes integration (run at start, every invocation)
+## Hercules integration (run at start, every invocation)
 
-1. Read `.github/prompts/manifest.json` and `.github/prompts/.hermes/memory-adapter.md`.
+1. Read `.github/prompts/manifest.json` and `.github/prompts/.hercules/memory-adapter.md`.
 2. `lesson.recall(["saga"])` — honour returned lessons.
 3. Open an episode if standalone: `episode.append({phase:"open", skill:"saga", summary})` (ODIN opens it when dispatched).
 4. **Cache & handoff:** `cache.read("dc-<nodeId>-<version>")` before re-fetching `get_design_context`; reuse MIMR's NV map (when ODIN forwards it) to derive `--fds-*` vars instead of re-resolving variables.
@@ -31,6 +32,7 @@ Generate semantic HTML + CSS from a Figma Auto Layout node. CSS custom propertie
 ## Trigger
 
 Activate when the user explicitly says:
+
 - "generate component"
 - "scaffold component from…"
 - "generate HTML/CSS from…"
@@ -40,11 +42,11 @@ Activate when the user explicitly says:
 
 ## Slots
 
-| Slot | Source | Format |
-|---|---|---|
-| `{frame_url}` | User | Full Figma URL |
-| `{file_key}` | Extracted from URL | path segment after `/design/` |
-| `{node_id}` | Extracted from URL `node-id` param | replace `-` → `:` |
+| Slot          | Source                             | Format                        |
+| ------------- | ---------------------------------- | ----------------------------- |
+| `{frame_url}` | User                               | Full Figma URL                |
+| `{file_key}`  | Extracted from URL                 | path segment after `/design/` |
+| `{node_id}`   | Extracted from URL `node-id` param | replace `-` → `:`             |
 
 ---
 
@@ -75,10 +77,10 @@ Before mapping any layout, scan the full node tree for `INSTANCE` nodes. For eac
 
 1. **Derive the CE tag name** — two-step, in order:
 
-   | Source | How | Use when |
-   |---|---|---|
-   | `mainComponent.name` | REST field on the INSTANCE node | Present and non-empty — **preferred** |
-   | `node.name` (layer name) | Strip surrounding `{` `}` if present | Fallback |
+   | Source                   | How                                  | Use when                              |
+   | ------------------------ | ------------------------------------ | ------------------------------------- |
+   | `mainComponent.name`     | REST field on the INSTANCE node      | Present and non-empty — **preferred** |
+   | `node.name` (layer name) | Strip surrounding `{` `}` if present | Fallback                              |
 
    Once you have the raw name:
    - Lowercase + kebab-case (spaces and `_` → `-`)
@@ -114,16 +116,16 @@ Wait for confirmation before proceeding to Step 2.
 
 For each frame in the node tree, map Figma properties to CSS:
 
-| Figma property | CSS output |
-|---|---|
-| `layoutMode` HORIZONTAL / VERTICAL | `flex-direction: row / column` |
-| `primaryAxisAlignItems` | `justify-content` |
-| `counterAxisAlignItems` | `align-items` |
-| `paddingTop/Right/Bottom/Left` | `padding` — see CSS var rule below |
-| `itemSpacing` | `gap` — see CSS var rule below |
-| `fills[0]` | `background` — see CSS var rule below |
-| `cornerRadius` | `border-radius` — see CSS var rule below |
-| `width` / `height` (FIXED sizing) | explicit `width` / `height` |
+| Figma property                     | CSS output                               |
+| ---------------------------------- | ---------------------------------------- |
+| `layoutMode` HORIZONTAL / VERTICAL | `flex-direction: row / column`           |
+| `primaryAxisAlignItems`            | `justify-content`                        |
+| `counterAxisAlignItems`            | `align-items`                            |
+| `paddingTop/Right/Bottom/Left`     | `padding` — see CSS var rule below       |
+| `itemSpacing`                      | `gap` — see CSS var rule below           |
+| `fills[0]`                         | `background` — see CSS var rule below    |
+| `cornerRadius`                     | `border-radius` — see CSS var rule below |
+| `width` / `height` (FIXED sizing)  | explicit `width` / `height`              |
 
 **CSS var derivation rule:** For any property that has an NV binding, derive the CSS custom property as `--{shortName}` where `shortName` is the last `/`-separated segment of the NV variable name. **Always include the resolved pixel/hex value as the fallback**, even when a binding exists.
 
@@ -169,10 +171,10 @@ vscode_askQuestions([{
 
 **If vanilla (or Both):** output three files:
 
-| File | Description |
-|---|---|
-| **`{name}.html`** | Semantic structure mirroring the layer hierarchy |
-| **`{name}.css`** | Vanilla CSS with `--fds-*` custom properties |
+| File                    | Description                                           |
+| ----------------------- | ----------------------------------------------------- |
+| **`{name}.html`**       | Semantic structure mirroring the layer hierarchy      |
+| **`{name}.css`**        | Vanilla CSS with `--fds-*` custom properties          |
 | **`{name}.module.css`** | CSS Modules version (scoped class names, same values) |
 
 **INSTANCE nodes in HTML output** — emit a self-closing CE tag at the exact position the instance occupies in the layout. Do not reconstruct its internals.
@@ -244,7 +246,7 @@ Derive from `COMPONENT_SET.variantGroupProperties`. Each axis becomes one prop. 
 
 Each slot name provided by the user becomes a `<slot name="…">` in `render()`. Never infer slots from VALI-renamed layers.
 
-**Internal TEXT vs slot.** Render an *internal* TEXT node (fixed label, static copy owned by the component) as real markup with explicit typography — not a slot. Reserve named slots for content the consumer supplies (titles, body copy, actions). Slot only what is externally variable; bake what is intrinsic to the component.
+**Internal TEXT vs slot.** Render an _internal_ TEXT node (fixed label, static copy owned by the component) as real markup with explicit typography — not a slot. Reserve named slots for content the consumer supplies (titles, body copy, actions). Slot only what is externally variable; bake what is intrinsic to the component.
 
 ```tsx
 render() {
@@ -285,22 +287,26 @@ Use the confirmed tag names from Step 1b. One comment line per unique dependency
 
 **Host sizing — map from root frame `layoutSizingHorizontal`**
 
-| Figma value | `:host` CSS |
-|---|---|
-| `FILL` | `display: block; width: 100%;` |
-| `FIXED` | `display: block; width: {value}px;` |
-| `HUG` | `display: inline-block;` |
+| Figma value | `:host` CSS                         |
+| ----------- | ----------------------------------- |
+| `FILL`      | `display: block; width: 100%;`      |
+| `FIXED`     | `display: block; width: {value}px;` |
+| `HUG`       | `display: inline-block;`            |
 
 **Variant CSS — classes, not JS conditionals**
 
 Write variant overrides in the `.css` file as host-state selectors:
 
 ```css
-:host(.success) { --fds-surface: var(--fds-color-success-surface); }
-:host(.error)   { --fds-surface: var(--fds-color-error-surface); }
+:host(.success) {
+  --fds-surface: var(--fds-color-success-surface);
+}
+:host(.error) {
+  --fds-surface: var(--fds-color-error-surface);
+}
 ```
 
-**Per-variant token values — required data source.** Each `:host(.variant)` override needs the *resolved* token for that variant, which a single root-frame fetch does not contain. Before writing variant CSS, obtain per-variant values from one of:
+**Per-variant token values — required data source.** Each `:host(.variant)` override needs the _resolved_ token for that variant, which a single root-frame fetch does not contain. Before writing variant CSS, obtain per-variant values from one of:
 
 1. **MIMR matrix** — when ODIN forwards MIMR's per-variant NV map, use it directly (no extra fetches).
 2. **Standalone fetch** — when running standalone (no MIMR handoff), first detect the **color-bearing axis** (the axis whose values change fills/strokes), then run `get_design_context` once per distinct value of that axis and read the bound token from each. Never invent variant token names from the axis label alone.
@@ -332,8 +338,12 @@ Never branch on props in `render()` for visual differences — use CSS classes m
 }
 
 /* Variant overrides */
-:host(.success) { background: var(--fds-success-surface, #d8f2d7); }
-:host(.error)   { background: var(--fds-error-surface,   #ffe0e8); }
+:host(.success) {
+  background: var(--fds-success-surface, #d8f2d7);
+}
+:host(.error) {
+  background: var(--fds-error-surface, #ffe0e8);
+}
 
 /* Internal layout */
 .banner-content {
@@ -351,7 +361,7 @@ Shadow DOM does not inherit CSS across slot boundaries. For every text-bearing s
 /* Title — Open Sans Bold 16/24 */
 ::slotted([slot="title"]) {
   display: block;
-  font-family: 'Open Sans', sans-serif;
+  font-family: "Open Sans", sans-serif;
   font-weight: 700;
   font-size: 16px;
   line-height: 24px;
@@ -362,7 +372,7 @@ Shadow DOM does not inherit CSS across slot boundaries. For every text-bearing s
 /* Body — Open Sans Regular 14/20 */
 ::slotted([slot="content"]) {
   display: block;
-  font-family: 'Open Sans', sans-serif;
+  font-family: "Open Sans", sans-serif;
   font-weight: 400;
   font-size: 14px;
   line-height: 20px;
@@ -384,7 +394,7 @@ If the Figma action area has no `background`, `border`, or `padding` (text label
   padding: 0;
   margin: 0;
   /* then apply Figma typography */
-  font-family: 'Lato', sans-serif;
+  font-family: "Lato", sans-serif;
   font-weight: 700;
   font-size: 16px;
   line-height: 24px;
@@ -398,15 +408,21 @@ This applies when stories render `<button slot="actions">` — prevents UA chrom
 ### 4.5 — Storybook story (CSF3, Storybook 9/10, `@storybook/web-components`)
 
 ```ts
-import type { Meta, StoryObj } from '@storybook/web-components';
-import { html } from 'lit';
+import type { Meta, StoryObj } from "@storybook/web-components";
+import { html } from "lit";
 
 // Ensure the component is registered
-import './fds-{name}';
+import "./fds-{name}";
 
 type ComponentArgs = {
-  type: 'Status' | 'Neutral';
-  context: 'success' | 'error' | 'alert' | 'info' | 'surface' | 'surface-variant';
+  type: "Status" | "Neutral";
+  context:
+    | "success"
+    | "error"
+    | "alert"
+    | "info"
+    | "surface"
+    | "surface-variant";
   // one entry per slot declared by the user:
   iconSlot?: string;
   contentSlot?: string;
@@ -414,17 +430,27 @@ type ComponentArgs = {
 };
 
 const meta: Meta<ComponentArgs> = {
-  title: 'Components/Fds{PascalName}',
-  tags: ['autodocs'],
+  title: "Components/Fds{PascalName}",
+  tags: ["autodocs"],
   argTypes: {
-    type:    { control: 'select', options: ['Status', 'Neutral'] },
-    context: { control: 'select', options: ['success', 'error', 'alert', 'info', 'surface', 'surface-variant'] },
+    type: { control: "select", options: ["Status", "Neutral"] },
+    context: {
+      control: "select",
+      options: [
+        "success",
+        "error",
+        "alert",
+        "info",
+        "surface",
+        "surface-variant",
+      ],
+    },
   },
   render: ({ type, context, iconSlot, contentSlot, actionsSlot }) => html`
     <fds-{name} type=${type} context=${context}>
-      ${iconSlot    ? html`<span slot="icon">${iconSlot}</span>`       : ''}
-      ${contentSlot ? html`<span slot="content">${contentSlot}</span>` : ''}
-      ${actionsSlot ? html`<span slot="actions">${actionsSlot}</span>` : ''}
+      ${iconSlot ? html`<span slot="icon">${iconSlot}</span>` : ""}
+      ${contentSlot ? html`<span slot="content">${contentSlot}</span>` : ""}
+      ${actionsSlot ? html`<span slot="actions">${actionsSlot}</span>` : ""}
     </fds-{name}>
   `,
 };
@@ -433,23 +459,40 @@ type Story = StoryObj<ComponentArgs>;
 
 // If total axis × value combinations > 12, vary only the primary axis; keep defaults for others.
 export const Default: Story = {
-  args: { type: 'Status', context: 'success', contentSlot: 'Banner message goes here.' },
+  args: {
+    type: "Status",
+    context: "success",
+    contentSlot: "Banner message goes here.",
+  },
 };
 export const Error: Story = {
-  args: { type: 'Status', context: 'error', contentSlot: 'Something went wrong.' },
+  args: {
+    type: "Status",
+    context: "error",
+    contentSlot: "Something went wrong.",
+  },
 };
 export const Alert: Story = {
-  args: { type: 'Status', context: 'alert', contentSlot: 'Attention required.' },
+  args: {
+    type: "Status",
+    context: "alert",
+    contentSlot: "Attention required.",
+  },
 };
 export const Info: Story = {
-  args: { type: 'Status', context: 'info', contentSlot: 'For your information.' },
+  args: {
+    type: "Status",
+    context: "info",
+    contentSlot: "For your information.",
+  },
 };
 export const Neutral: Story = {
-  args: { type: 'Neutral', context: 'surface', contentSlot: 'Neutral banner.' },
+  args: { type: "Neutral", context: "surface", contentSlot: "Neutral banner." },
 };
 ```
 
 **Story rules:**
+
 - Use `lit` `html` template tag for rendering — required by `@storybook/web-components`.
 - Slot args are plain strings wrapped in a `<span slot="…">` — keeps the story controls simple. Action slots use `<button slot="actions">` so the no-chrome CSS rule is exercised.
 - If the component has no variant axes, emit a single `Default` story only.
@@ -458,34 +501,37 @@ export const Neutral: Story = {
 
 ```ts
 // Correct — attribute is present (true) or absent (false)
-html`<fds-{name} ?action-button=${actionButton} ?show-title=${showTitle}>`
+html`<fds-{name}
+  ?action-button=${actionButton}
+  ?show-title=${showTitle}
+></fds-{name}>`;
 
 // Wrong — passes the string "false", which evaluates as truthy in getAttribute checks
-html`<fds-{name} action-button="${actionButton}">`
+html`<fds-{name} action-button="${actionButton}"></fds-{name}>`;
 ```
 
 ---
 
 ## Critical rules
 
-| Rule | Detail |
-|---|---|
-| Explicit trigger only | Never activate unless the user explicitly requests code generation — not after a MIMR audit |
-| INSTANCE nodes are CE references | Emit a self-closing CE tag at the instance position; never reconstruct internals. Tag from `mainComponent.name`. Confirm mapping via `vscode_askQuestions`. |
-| INSTANCE children — never descend | Stop at the INSTANCE boundary — children are read-only overrides |
-| CSS vars with fallbacks | Every `--fds-*` var carries a resolved fallback: `var(--fds-token, 16px)` |
-| User input | Use `vscode_askQuestions` for any ambiguous decision — never inline chat text |
-| CLAUDE.md assets | Use a localhost image/SVG source directly — no placeholders, no new icon packages |
-| Shadow DOM always | StencilJS output always `shadow: true` |
-| Slots are explicit | Named slots come from the user's Step 3 answer — never inferred from layer names |
-| No JS variant logic | Variant differences in CSS (`:host(.class)`) — never branch in `render()` |
-| Stencil tag prefix | All generated tags prefixed `fds-` |
-| Story renderer | Always the `lit` `html` tag in stories |
-| Boolean props — `?attr` binding | `?attr=${bool}` in lit; CE stub uses `hasAttribute()` — see § StencilJS output |
-| `::slotted` typography always explicit | One `::slotted([slot])` rule per text slot — see § `::slotted()` typography rules |
-| No-chrome action slot | Reset `appearance`/`background`/`border`/`padding` on a chromeless action slot |
-| CE stub must mirror Stencil CSS | Keep `register-components.ts` styles in sync with the Stencil CSS file |
-| GFM tables — `remark-gfm` required | MDX tables need `remark-gfm` registered via `addon-docs` — see § Storybook project setup |
+| Rule                                   | Detail                                                                                                                                                      |
+| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Explicit trigger only                  | Never activate unless the user explicitly requests code generation — not after a MIMR audit                                                                 |
+| INSTANCE nodes are CE references       | Emit a self-closing CE tag at the instance position; never reconstruct internals. Tag from `mainComponent.name`. Confirm mapping via `vscode_askQuestions`. |
+| INSTANCE children — never descend      | Stop at the INSTANCE boundary — children are read-only overrides                                                                                            |
+| CSS vars with fallbacks                | Every `--fds-*` var carries a resolved fallback: `var(--fds-token, 16px)`                                                                                   |
+| User input                             | Use `vscode_askQuestions` for any ambiguous decision — never inline chat text                                                                               |
+| CLAUDE.md assets                       | Use a localhost image/SVG source directly — no placeholders, no new icon packages                                                                           |
+| Shadow DOM always                      | StencilJS output always `shadow: true`                                                                                                                      |
+| Slots are explicit                     | Named slots come from the user's Step 3 answer — never inferred from layer names                                                                            |
+| No JS variant logic                    | Variant differences in CSS (`:host(.class)`) — never branch in `render()`                                                                                   |
+| Stencil tag prefix                     | All generated tags prefixed `fds-`                                                                                                                          |
+| Story renderer                         | Always the `lit` `html` tag in stories                                                                                                                      |
+| Boolean props — `?attr` binding        | `?attr=${bool}` in lit; CE stub uses `hasAttribute()` — see § StencilJS output                                                                              |
+| `::slotted` typography always explicit | One `::slotted([slot])` rule per text slot — see § `::slotted()` typography rules                                                                           |
+| No-chrome action slot                  | Reset `appearance`/`background`/`border`/`padding` on a chromeless action slot                                                                              |
+| CE stub must mirror Stencil CSS        | Keep `register-components.ts` styles in sync with the Stencil CSS file                                                                                      |
+| GFM tables — `remark-gfm` required     | MDX tables need `remark-gfm` registered via `addon-docs` — see § Storybook project setup                                                                    |
 
 ---
 
@@ -502,18 +548,20 @@ npm install --save-dev remark-gfm --legacy-peer-deps
 In `.storybook/main.ts`:
 
 ```ts
-import remarkGfm from 'remark-gfm';
+import remarkGfm from "remark-gfm";
 
-addons: [{
-  name: '@storybook/addon-docs',
-  options: {
-    mdxPluginOptions: {
-      mdxCompileOptions: {
-        remarkPlugins: [remarkGfm],
+addons: [
+  {
+    name: "@storybook/addon-docs",
+    options: {
+      mdxPluginOptions: {
+        mdxCompileOptions: {
+          remarkPlugins: [remarkGfm],
+        },
       },
     },
   },
-}]
+];
 ```
 
 ### `register-components.ts` (native CE preview stub)
@@ -521,6 +569,7 @@ addons: [{
 A `register-components.ts` file in `.storybook/` registers a native `HTMLElement` subclass that mirrors the Stencil component for Storybook preview (no Stencil compilation required). Import it from `preview.ts`.
 
 Rules:
+
 - Embed all shadow styles inline in a `<template>` — identical structure to the Stencil CSS.
 - Use `hasAttribute('attr')` for all boolean props — never `getAttribute('attr') !== 'false'`.
 - In `_update()`, re-render dynamic parts (icon, visibility) on every `attributeChangedCallback`.

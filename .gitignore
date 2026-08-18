@@ -50,10 +50,10 @@ src/
 .storybook/
 storybook-static/
 
-# ─── Hermes memory — volatile state + rebuildable caches ──────
+# ─── Hercules memory — volatile state + rebuildable caches ──────
 # Committed: episodes.jsonl, lessons.jsonl, memory-adapter.md
 # Ignored:   live run state + caches + synced KB/token clones
-.github/prompts/.hermes/state/*
-!.github/prompts/.hermes/state/.gitkeep
-.github/prompts/.hermes/cache/*
-!.github/prompts/.hermes/cache/.gitkeep
+.github/prompts/.hercules/state/*
+!.github/prompts/.hercules/state/.gitkeep
+.github/prompts/.hercules/cache/*
+!.github/prompts/.hercules/cache/.gitkeep

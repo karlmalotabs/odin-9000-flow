@@ -13,13 +13,13 @@ files never enter another agent's context.
 
 ## Boot (every invocation)
 1. Read `.github/prompts/manifest.json` → `skills.librarian.sync` for repo slugs/paths.
-2. Read `.github/prompts/.hermes/memory-adapter.md`.
+2. Read `.github/prompts/.hercules/memory-adapter.md`.
 
 ## Freshness (per run, cheap)
-Run `bash .github/prompts/.hermes/sync-kb.sh`. It does one `git ls-remote` per repo and
-re-pulls **only when the remote SHA differs** from `.hermes/cache/kb-manifest.json`. On a hit it
+Run `bash .github/prompts/.hercules/sync-kb.sh`. It does one `git ls-remote` per repo and
+re-pulls **only when the remote SHA differs** from `.hercules/cache/kb-manifest.json`. On a hit it
 is a no-op. Use `--force` only when the user explicitly asks to resync.
-- Mirror locations: `.hermes/cache/tokens/` (JSON) and `.hermes/cache/kb/` (KB md).
+- Mirror locations: `.hercules/cache/tokens/` (JSON) and `.hercules/cache/kb/` (KB md).
 - After a token JSON re-pull, regenerate the compact `mimr/data/token-index.json` from the
   refreshed JSON (this file is a build artifact, not hand-edited).
 
@@ -27,7 +27,7 @@ is a no-op. Use `--force` only when the user explicitly asks to resync.
 - **token lookup** — resolve a short name or TS path to its canonical path + reference value:
   `python .github/prompts/mimr/scripts/token-lookup.py "<name>"` against the synced JSON
   (`--decompose` for composite border tokens). Return only the matched row(s).
-- **KB query** — `grep`/`rg` the `.hermes/cache/kb/` `.md` files for the query; return the
+- **KB query** — `grep`/`rg` the `.hercules/cache/kb/` `.md` files for the query; return the
   smallest relevant snippet(s) with their file path.
 
 ## Constraints
