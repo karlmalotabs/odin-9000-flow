@@ -9,6 +9,26 @@
 
 ---
 
+## `layoutSizingHorizontal: 'FILL'` must be set on the WHOLE ancestor chain, not just the leaf
+
+Setting `FILL` on a leaf instance (e.g. a header's icon-button row) while an **intermediate**
+container between it and the fixed-width root is left at the default `HUG` silently collapses
+that leaf to a tiny size (confirmed 2026-08-28: a "Header Row" FILL-set node rendered at `52x100`
+instead of `~342` wide) — even re-asserting `layoutSizingHorizontal = 'FILL'` directly on the leaf
+node post-`$fig.done()` does not fix it, because the *parent* is still `HUG` and has no extra
+width to give.
+
+**Fix:** when a `FILL` node renders too small, walk **up** the tree and verify every intermediate
+container between it and the nearest `FIXED`-width ancestor is also `FILL` — not just the node
+you're debugging. Setting the flag on a node whose own parent is `HUG` is a no-op in practice.
+
+**Related:** `TEXT` nodes (titles, subtitles, checkbox labels) that look clipped/truncated even
+inside a correctly-sized `FILL` parent need **both** `layoutSizingHorizontal: 'FILL'` **and**
+`textAutoResize: 'HEIGHT'` set explicitly — `FILL` alone on a `TEXT` node does not stop it
+rendering at its own auto-sized (pre-parent-constraint) width.
+
+---
+
 ## Overlaying a node on a sibling inside Auto Layout — set `layoutPositioning: 'ABSOLUTE'`
 
 Manually setting `node.x`/`node.y` on a child of an Auto Layout frame **does nothing by default**
