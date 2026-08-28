@@ -119,6 +119,30 @@ Implemented in `scripts/process.figma.js` — `opUngroup()`. Express as:
 { "op": "ungroup", "id": "WRAPPER_FRAME_ID" }
 ```
 
+### Fixing default names buried inside nested INSTANCEs (detach required)
+
+Default Figma names (`Frame N`, `Group N`) are often several INSTANCE levels deep — e.g. a
+placed root instance → a sub-component instance → a local component instance → the actual
+generic-named FRAME wrappers. All of it is read-only until every ancestor level is detached.
+
+1. **Confirm scope with the user first** — which levels to detach, which duplicate/hidden
+   instances to include. Detaching a shared design-system component (e.g. `FDS-Card`) to reach
+   a nested wrapper permanently breaks its library link on that placed copy — always flag this
+   explicitly and get approval before detaching, never assume it's fine.
+2. **Detach outermost-first**, via `node.detachInstance()` on each ancestor level in turn.
+   **`detachInstance()` returns a node with a NEW id** — the original `ROOT_ID`/`NODE_ID` stops
+   resolving immediately. Capture and use the returned reference directly; don't re-fetch by the
+   old id. If a later step needs the new root id (e.g. for a final screenshot) and it wasn't
+   captured, recover it via `figma.currentPage.findAll(n => n.name === '<original name>')`.
+3. **Collapse whole chains, not just one level.** A single-child no-pad/no-fill wrapper often
+   wraps another single-child no-pad/no-fill wrapper (`Frame 8 → Frame 6 → Frame 5`) — loop the
+   ungroup check on the *promoted* node until it no longer qualifies, rather than doing one
+   ungroup pass and stopping. This eliminates most default-named wrappers entirely instead of
+   just relabeling them.
+4. **Only classify + rename what survives collapsing.** Fewer, more meaningful nodes remain once
+   the redundant chain is gone.
+
+
 Key steps (for reference):
 
 1. Capture wrapper name/id AND `layoutSizingH/V` **before any mutation** — `.name` throws after `remove()`
