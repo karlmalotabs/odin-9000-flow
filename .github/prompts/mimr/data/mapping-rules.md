@@ -28,6 +28,20 @@ When binding fill tokens to content nodes (TEXT, VECTOR icons), the token MUST m
 
 ---
 
+## Typography TS tokens bind to a TEXT STYLE, not a variable
+
+The TS `typography` key (e.g. `"Paragraphs.fds.fds-paragraphs-regular"`) never maps to a bound
+variable — it always targets `node.textStyleId` on a `TEXT` node via a real Figma text **style**.
+`scan-bind-live.figma.js` handles this as its own pass (see `mimr.prompt.md` § Typography):
+already-bound check is `node.textStyleId !== ''`, and the style `key` for each distinct TS path
+must be resolved via `search_design_system` (styles have no name-lookup Plugin API, unlike
+variables) and injected as `TYPOGRAPHY_KEY_MAP`. Resolved keys are recorded in
+`data/token-registry.md` / `data/token-index.json`'s 4th column — for `typography` rows only,
+that column holds the style **key**, not an NV variable name. Never hand-pick `fontName`/
+`fontSize` as a substitute for a missing style binding.
+
+---
+
 ## Component naming gotchas
 
 > **`FDS-Button-Control-Two` is a 2-button control group, not a single secondary button.** Instantiating it for a single lower-emphasis CTA produces a stacked pair of buttons (one bound, one still showing default placeholder text). For a single secondary/low-emphasis button, use `FDS-Button-Control-One` with `Hierarchy=Tertiary` instead. Verify a component's actual child/instance count via a quick inspection (`componentPropertyDefinitions` + rendered children) before assuming a plausible name matches its true structure.

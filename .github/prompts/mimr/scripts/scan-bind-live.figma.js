@@ -29,16 +29,29 @@
  *                                          // "66ad3b0aae1fc6eaf0081f6af41af1d609b53150").
  *                                          // Leave [] to auto-discover via
  *                                          // getAvailableLibraryVariableCollectionsAsync().
+ *   const TYPOGRAPHY_KEY_MAP = {};         // optional: { "Paragraphs.fds.fds-paragraphs-regular": "<40-char style key>", ... }
+ *                                          // Typography TS tokens (TS key name `typography`,
+ *                                          // e.g. "Paragraphs.fds.fds-paragraphs-regular") bind
+ *                                          // to a Figma TEXT STYLE (node.textStyleId), never a
+ *                                          // variable — there is no Plugin API "get style by
+ *                                          // name" call, so the agent must resolve each unique
+ *                                          // dot-path to its style `key` via `search_design_system`
+ *                                          // (see § Typography in mimr.prompt.md) and inject the
+ *                                          // map here. Leave {} for a dry run — the dry run
+ *                                          // reports every unresolved distinct path so the agent
+ *                                          // knows exactly what to look up before the write call.
  *
  * ── Output (inline JSON, no file write) ──────────────────────────────────────
  *
  *   DRY_RUN=true:
  *     { root, stats:{total,instances,withTS,withNV,both,unbound},
- *       candidateCountByProp:{fill,borderRadius,itemSpacing,borderColor,...}, candidateTotal }
+ *       candidateCountByProp:{fill,borderRadius,itemSpacing,borderColor,...}, candidateTotal,
+ *       typography:{candidateTotal, distinctPaths:{"<dot.path>": count, ...}} }
  *
  *   DRY_RUN=false:
  *     { root, stats, pendingTotal, libVarCount, applied, failed, notFound,
- *       notFoundByProp, notFoundSample:[...max 40], failedSample:[...max 20] }
+ *       notFoundByProp, notFoundSample:[...max 40], failedSample:[...max 20],
+ *       typography:{applied, failed, notFound, notFoundPaths:[...]} }
  *
  * Scope stays TS→NV binding only: no new tokens created, no rawValue writes, no value
  * changes on nodes that already carry the correct NV. Bind targets not resolvable to any
@@ -110,6 +123,9 @@ if (!root) return JSON.stringify({ error: `Root "${ROOT_ID}" not found` });
 const stats = { total: 0, instances: 0, withTS: 0, withNV: 0, both: 0, unbound: 0 };
 const candidateCountByProp = {};
 const pending = []; // { node, tsKey, tsVal }
+const typographyDistinctPaths = {}; // dot-path -> unbound count
+const typographyPending = []; // { node, tsPath }
+const TYPO_KEY_MAP = typeof TYPOGRAPHY_KEY_MAP !== 'undefined' ? TYPOGRAPHY_KEY_MAP : {};
 
 function visit(node, depth) {
   if (depth > 40) return;
@@ -126,6 +142,15 @@ function visit(node, depth) {
 
   if (ts) {
     for (const [tsKey, tsVal] of Object.entries(ts)) {
+      if (tsKey === 'typography') {
+        // Typography binds to a TEXT STYLE (node.textStyleId), not a variable —
+        // handled in its own pass below, never through TS_TO_NV_PROP.
+        if (node.type === 'TEXT' && !node.textStyleId) {
+          typographyDistinctPaths[tsVal] = (typographyDistinctPaths[tsVal] || 0) + 1;
+          typographyPending.push({ node, tsPath: tsVal });
+        }
+        continue;
+      }
       const nvProps = TS_TO_NV_PROP[tsKey];
       if (!nvProps) continue;
       if (!hasAnyNv(nv, nvProps)) {
@@ -146,6 +171,7 @@ function visit(node, depth) {
 visit(root, 0);
 
 const candidateTotal = Object.values(candidateCountByProp).reduce((a, b) => a + b, 0);
+const typographyCandidateTotal = typographyPending.length;
 
 if (typeof DRY_RUN === 'undefined' || DRY_RUN) {
   return JSON.stringify({
@@ -153,6 +179,7 @@ if (typeof DRY_RUN === 'undefined' || DRY_RUN) {
     stats,
     candidateCountByProp,
     candidateTotal,
+    typography: { candidateTotal: typographyCandidateTotal, distinctPaths: typographyDistinctPaths },
   });
 }
 
@@ -305,6 +332,32 @@ for (const { node, tsKey, tsVal } of pending) {
   }
 }
 
+// ── Typography pass: bind TEXT nodes' textStyleId via TYPOGRAPHY_KEY_MAP ────
+
+const typoReport = { applied: 0, failed: 0, notFound: 0 };
+const typoNotFoundPaths = new Set();
+const _styleImportCache = {};
+
+for (const { node, tsPath } of typographyPending) {
+  const key = TYPO_KEY_MAP[tsPath];
+  if (!key) {
+    typoReport.notFound++;
+    typoNotFoundPaths.add(tsPath);
+    continue;
+  }
+  try {
+    let style = _styleImportCache[key];
+    if (!style) {
+      style = await figma.importStyleByKeyAsync(key);
+      _styleImportCache[key] = style;
+    }
+    node.textStyleId = style.id;
+    typoReport.applied++;
+  } catch (_) {
+    typoReport.failed++;
+  }
+}
+
 return JSON.stringify({
   root: { id: root.id, name: root.name, type: root.type },
   stats,
@@ -316,4 +369,10 @@ return JSON.stringify({
   notFoundByProp,
   notFoundSample,
   failedSample,
+  typography: {
+    applied: typoReport.applied,
+    failed: typoReport.failed,
+    notFound: typoReport.notFound,
+    notFoundPaths: Array.from(typoNotFoundPaths),
+  },
 });

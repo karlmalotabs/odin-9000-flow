@@ -161,15 +161,15 @@ every direct child of every Auto Layout container after building and set FILL ex
 
 - **Type:** local `COMPONENT_SET`, one axis: **`Emphasis = Default | Featured`**
 - **Not a DS Fabric component** — built from scratch, every value bound to `[Lib]: FDS Design
-  Tokens`. Zero unbound colours, zero raw radii, zero hardcoded fonts.
+Tokens`. Zero unbound colours, zero raw radii, zero hardcoded fonts.
 
 **The three depth planes — this is what makes it read as Flair:**
 
-| Plane | Element | Treatment |
-| --- | --- | --- |
-| Shell (lowest, anchored) | container | `fds-elevation-const-surface-heavy` |
-| Cards (mid) | each card | `fds-elevation-const-surface-medium` |
-| Controls (lit) | Prev/Next pills | `fds-specular-const-gloss` |
+| Plane                    | Element         | Treatment                            |
+| ------------------------ | --------------- | ------------------------------------ |
+| Shell (lowest, anchored) | container       | `fds-elevation-const-surface-heavy`  |
+| Cards (mid)              | each card       | `fds-elevation-const-surface-medium` |
+| Controls (lit)           | Prev/Next pills | `fds-specular-const-gloss`           |
 
 The **shell gets no specular** — specular belongs to the round controls only. Reproduce that
 split; it is the single most important thing about this component.

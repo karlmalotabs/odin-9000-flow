@@ -514,24 +514,29 @@
 
 ## Typography — Composite (FDS)
 
-| Short Name | Token Studio Path | Type | Native Variable Name | Description |
+> **`typography` rows are special: the 4th column holds the Figma TEXT STYLE `key`** (importable
+> via `figma.importStyleByKeyAsync(key)`), not an NV variable name — styles have no
+> local/library name-lookup API. Bind target is `node.textStyleId`, never a variable. See
+> `mimr.prompt.md` § Typography.
+
+| Short Name | Token Studio Path | Type | Style Key | Description |
 |---|---|---|---|---|
 | `Lead` | `Display.Lead` | `typography` |  |  |
 | `Regular` | `Display.Regular` | `typography` |  |  |
 | `Small` | `Display.Small` | `typography` |  |  |
 | `Tiny` | `Display.Tiny` | `typography` |  |  |
-| `fds-display-lead` | `Display.fds.fds-display-lead` | `typography` |  |  |
-| `fds-display-regular` | `Display.fds.fds-display-regular` | `typography` |  |  |
-| `fds-display-small` | `Display.fds.fds-display-small` | `typography` |  |  |
-| `fds-display-tiny` | `Display.fds.fds-display-tiny` | `typography` |  |  |
+| `fds-display-lead` | `Display.fds.fds-display-lead` | `typography` | `783ec56815ef531a5f92797408ba066792d3ecbb` |  |
+| `fds-display-regular` | `Display.fds.fds-display-regular` | `typography` | `a1815b4fd6d2a7dcaca827c1c68d55d1c9f935cf` |  |
+| `fds-display-small` | `Display.fds.fds-display-small` | `typography` | `1298f327241672821491701c5d61bd6e42b3291b` |  |
+| `fds-display-tiny` | `Display.fds.fds-display-tiny` | `typography` | `79e812086b4602c941f9fee0ff577dd75aff9646` |  |
 | `Lead` | `Headline.Lead` | `typography` |  |  |
 | `Regular` | `Headline.Regular` | `typography` |  |  |
 | `Small` | `Headline.Small` | `typography` |  |  |
 | `Tiny` | `Headline.Tiny` | `typography` |  |  |
-| `fds-headline-lead` | `Headline.fds.fds-headline-lead` | `typography` |  |  |
-| `fds-headline-regular` | `Headline.fds.fds-headline-regular` | `typography` |  |  |
-| `fds-headline-small` | `Headline.fds.fds-headline-small` | `typography` |  |  |
-| `fds-headline-tiny` | `Headline.fds.fds-headline-tiny` | `typography` |  |  |
+| `fds-headline-lead` | `Headline.fds.fds-headline-lead` | `typography` | `0fbdc89cfe8ab20dfeecb4720465047eefec399c` |  |
+| `fds-headline-regular` | `Headline.fds.fds-headline-regular` | `typography` | `bd2c297f1cdb67187490d206b3fe45d07d299717` |  |
+| `fds-headline-small` | `Headline.fds.fds-headline-small` | `typography` | `40f31265cdd9cc28406bc59b187e1cebbc22d304` |  |
+| `fds-headline-tiny` | `Headline.fds.fds-headline-tiny` | `typography` | `152b6bfadc287e484617763b88feee41d5323922` |  |
 | `Lead` | `Paragraphs.Lead` | `typography` |  |  |
 | `Lead - bold` | `Paragraphs.Lead - bold` | `typography` |  |  |
 | `Regular` | `Paragraphs.Regular` | `typography` |  |  |
@@ -540,16 +545,16 @@
 | `Small - bold` | `Paragraphs.Small - bold` | `typography` |  |  |
 | `Tiny` | `Paragraphs.Tiny` | `typography` |  |  |
 | `Tiny - bold` | `Paragraphs.Tiny - bold` | `typography` |  |  |
-| `fds-paragraphs-lead` | `Paragraphs.fds.fds-paragraphs-lead` | `typography` |  |  |
-| `fds-paragraphs-lead-bold` | `Paragraphs.fds.fds-paragraphs-lead-bold` | `typography` |  |  |
-| `fds-paragraphs-regular` | `Paragraphs.fds.fds-paragraphs-regular` | `typography` |  |  |
-| `fds-paragraphs-regular-bold` | `Paragraphs.fds.fds-paragraphs-regular-bold` | `typography` |  |  |
-| `fds-paragraphs-small` | `Paragraphs.fds.fds-paragraphs-small` | `typography` |  |  |
-| `fds-paragraphs-small-bold` | `Paragraphs.fds.fds-paragraphs-small-bold` | `typography` |  |  |
-| `fds-paragraphs-tiny` | `Paragraphs.fds.fds-paragraphs-tiny` | `typography` |  |  |
-| `fds-paragraphs-tiny-bold` | `Paragraphs.fds.fds-paragraphs-tiny-bold` | `typography` |  |  |
-| `fds-paragraphs-micro` | `Paragraphs.fds.fds-paragraphs-micro` | `typography` |  |  |
-| `fds-paragraphs-micro-bold` | `Paragraphs.fds.fds-paragraphs-micro-bold` | `typography` |  |  |
+| `fds-paragraphs-lead` | `Paragraphs.fds.fds-paragraphs-lead` | `typography` | `53261f70ad095a9b4e13adb7ec4f7c3d0af3993e` |  |
+| `fds-paragraphs-lead-bold` | `Paragraphs.fds.fds-paragraphs-lead-bold` | `typography` | `30b3631db235678277461c33d827dabd7721e01b` |  |
+| `fds-paragraphs-regular` | `Paragraphs.fds.fds-paragraphs-regular` | `typography` | `11f3aa5b57ab8b8923897d1536bff5f27ebbb775` |  |
+| `fds-paragraphs-regular-bold` | `Paragraphs.fds.fds-paragraphs-regular-bold` | `typography` | `a52e5e77e4bc958911e33efcbe304d6298314d8c` |  |
+| `fds-paragraphs-small` | `Paragraphs.fds.fds-paragraphs-small` | `typography` | `4d35bd6c9849f972ecf0c62eeb9dde5f9daa579e` |  |
+| `fds-paragraphs-small-bold` | `Paragraphs.fds.fds-paragraphs-small-bold` | `typography` | `e6a5a41421b867afc36e774a764730616c795daf` |  |
+| `fds-paragraphs-tiny` | `Paragraphs.fds.fds-paragraphs-tiny` | `typography` | `ff36ad38a8bd17abc9952805a8570a7014232bb3` |  |
+| `fds-paragraphs-tiny-bold` | `Paragraphs.fds.fds-paragraphs-tiny-bold` | `typography` | `a377d8e5b603090d5e1a6c57a262876a50d2c7df` |  |
+| `fds-paragraphs-micro` | `Paragraphs.fds.fds-paragraphs-micro` | `typography` | `f6a4cc0532d3e16bcb9a0bfcd1a8fa8a107028cb` |  |
+| `fds-paragraphs-micro-bold` | `Paragraphs.fds.fds-paragraphs-micro-bold` | `typography` | `9ba3c5669d4a16e45c8410a55931841fcd089c1b` |  |
 
 
 ## Typography — Gaming

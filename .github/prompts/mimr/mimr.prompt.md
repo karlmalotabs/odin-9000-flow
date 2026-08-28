@@ -77,11 +77,12 @@ instead of the Phase 1 → 1b → 2 → 3 pipeline below. It collapses scan + re
 calls total:
 
 1. **Dry run** — inject `DRY_RUN = true`, `INCLUDE_INSTANCES = <true|false per the request>`.
-   Returns `{ stats, candidateCountByProp, candidateTotal }` only — no writes. Show this table to
-   the user and get a yes/no before writing (this is still the mandatory Phase 2 confirm gate,
-   just against a counts table instead of a full tree).
-2. **Write** — same injection with `DRY_RUN = false`. Returns `{ applied, failed, notFound,
-   notFoundByProp, notFoundSample, failedSample }`.
+   Returns `{ stats, candidateCountByProp, candidateTotal, typography }` only — no writes. Show
+   this table to the user and get a yes/no before writing (this is still the mandatory Phase 2
+   confirm gate, just against a counts table instead of a full tree).
+2. **Write** — same injection with `DRY_RUN = false`, plus `TYPOGRAPHY_KEY_MAP` populated per
+   § Typography below if `typography.candidateTotal > 0`. Returns `{ applied, failed, notFound,
+   notFoundByProp, notFoundSample, failedSample, typography }`.
 
 **`INCLUDE_INSTANCES`** — ask (or infer from the request) whether instance-internal nodes should
 be walked and bound:
@@ -108,6 +109,43 @@ library needs enabling (Assets panel → Libraries) before retrying.
 **When NOT to use this path:** if the user actually wants the full audit tree/matrix/conflict
 report (Phase 2), use the normal `audit-resolve-digest.figma.js` flow — `scan-bind-live.figma.js`
 only returns counts and samples, not a rendered tree.
+
+### Typography — TS tokens bind to a Figma TEXT STYLE, not a variable
+
+The TS namespace uses one key, `typography` (e.g. value `"Paragraphs.fds.fds-paragraphs-regular"`),
+for every font/type-ramp token, and it always targets `node.textStyleId` on a `TEXT` node — never
+`fontName`/`fontSize` directly and never a bound variable. `TS_TO_NV_PROP` deliberately excludes
+`typography` — it is handled as its own pass in `scan-bind-live.figma.js` because styles resolve
+differently from variables:
+
+- **"Already bound" check:** `node.textStyleId !== ''` (not `boundVariables`).
+- **No Plugin-API "get style by name"** exists (unlike variables, which have
+  `figma.teamLibrary.getAvailableLibraryVariableCollectionsAsync()`), so the agent — not the
+  script — must resolve each distinct TS dot-path to its Figma style `key` before the write call.
+
+**Procedure:**
+
+1. **Dry run first** (`TYPOGRAPHY_KEY_MAP = {}`). Read `typography.distinctPaths` — this is
+   almost always a short list (a handful of type-ramp entries), even when `typography.candidateTotal`
+   itself is in the hundreds, because the same ramp step repeats across many nodes.
+2. **Resolve each distinct path's style key.** Grep `data/token-index.json` first — typography
+   rows follow the same `[shortName, tsPath, "typography", styleKey?, desc?]` schema as every
+   other token type, except **the 4th field holds the Figma style `key` directly** (not an NV
+   variable name — styles have no local/library name-lookup API, only `importStyleByKeyAsync(key)`).
+   For any path missing a 4th field, call `search_design_system` with `includeStyles: true,
+   includeComponents: false, includeVariables: false`, scoped to the FDS text-style library key
+   (`lk-f1f39740f68a0938825ad9ac446f29cc51482c1a7219bd0434e34e69fe3062e1060180556b6e66ae32ddad4017fed27d3ab46603e5f691d7c171204e0c095893`),
+   using the token's short name (e.g. `fds-paragraphs-lead-bold`). A single query commonly returns
+   the whole sibling ramp (all weights/sizes in that family) in one call — capture all of them, not
+   just the one you searched for.
+3. **Write back what you resolved** into `data/token-index.json` (and the matching row in
+   `data/token-registry.md`) before running the write pass — this is the whole point of the
+   registry: the next run finds the key locally and skips `search_design_system` entirely.
+4. **Write pass:** inject the assembled `TYPOGRAPHY_KEY_MAP = { "<dot.path>": "<style key>", ... }`
+   alongside `DRY_RUN = false`. The script imports each style once (cached per key) and sets
+   `node.textStyleId = style.id`.
+5. Any distinct path still unresolved after step 2 is **left unbound and reported** in
+   `typography.notFoundPaths` — never guess a close-enough style.
 
 ---
 
