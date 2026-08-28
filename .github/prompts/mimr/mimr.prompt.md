@@ -111,6 +111,31 @@ Brands"), it auto-falls-back to `figma.teamLibrary.getAvailableLibraryVariableCo
 report (Phase 2), use the normal `audit-resolve-digest.figma.js` flow — `scan-bind-live.figma.js`
 only returns counts and samples, not a rendered tree.
 
+### Chunking very large components (confirmed 2026-08-28, FDS-Input at 8601 nodes)
+
+When a dry-run/first pass reports total pending (structural + typography) above roughly
+**1500–2000 items**, a single combined call risks a plugin timeout. Split the write into:
+
+1. **Structural props** — usually fine in one call even at 500–700 items (cheap per-node).
+2. **Typography** — chunk into batches of **~500–550** items.
+
+Each chunk call must **re-walk the full tree fresh** and always take from the **front** of the
+live pending list (`pending.slice(0, CHUNK_SIZE)`) — never track a running offset across calls.
+Already-bound nodes (`textStyleId` set) drop out of every fresh re-walk automatically, so
+front-slicing is self-correcting call-to-call with zero index bookkeeping. An offset-based slice
+(`pending.slice(CHUNK_START, CHUNK_START + CHUNK_SIZE)` with `CHUNK_START` incremented each call)
+is **wrong** — the pending array shrinks between calls, so the same offset skips a block of
+never-processed items. Repeat chunks until a verification call (recompute pending, no writes)
+reports `0` remaining for both structural and typography.
+
+**Raw-literal TS values (seen: `borderWidth`):** some TS-authored properties store a raw resolved
+number (e.g. `"1.5"`) instead of a dot-path, even though a real `fds-*` token exists for it (e.g.
+`fds-stroke-150` = 1.5px). If `scan-bind-live` reports 100% `notFound` for one prop with the same
+raw numeric `tsVal` across many nodes, don't treat it as unresolvable — `search_design_system` for
+an `fds-stroke-<value*100>` token, then bind that key directly to all matching nodes in one pass
+(bypass name-based `findEntry` entirely for that prop). See `data/token-registry.md` → Border /
+Stroke — Scale for the resolved `fds-stroke-050/100/150/200` keys.
+
 ### Typography — TS tokens bind to a Figma TEXT STYLE, not a variable
 
 The TS namespace uses one key, `typography` (e.g. value `"Paragraphs.fds.fds-paragraphs-regular"`),

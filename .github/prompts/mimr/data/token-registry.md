@@ -363,10 +363,10 @@
 
 | Short Name       | Token Studio Path           | Type          | Native Variable Name | Description |
 | ---------------- | --------------------------- | ------------- | -------------------- | ----------- |
-| `fds-stroke-050` | `fds-stroke.fds-stroke-050` | `borderWidth` |                      |             |
-| `fds-stroke-100` | `fds-stroke.fds-stroke-100` | `borderWidth` |                      |             |
-| `fds-stroke-150` | `fds-stroke.fds-stroke-150` | `borderWidth` |                      |             |
-| `fds-stroke-200` | `fds-stroke.fds-stroke-200` | `borderWidth` |                      |             |
+| `fds-stroke-050` | `fds-stroke.fds-stroke-050` | `borderWidth` | `fds-stroke/fds-stroke-050` | Raw value `0.5` |
+| `fds-stroke-100` | `fds-stroke.fds-stroke-100` | `borderWidth` | `fds-stroke/fds-stroke-100` | Raw value `1` |
+| `fds-stroke-150` | `fds-stroke.fds-stroke-150` | `borderWidth` | `fds-stroke/fds-stroke-150` (key `a0387253cac7577f65e7a4f938ff6383165ddd73`, `[Lib]: FDS Design Tokens` / Core Brands) | Raw value `1.5` — TS sometimes stores this as the literal number `"1.5"` instead of a dot-path; match by value, not name, when that happens |
+| `fds-stroke-200` | `fds-stroke.fds-stroke-200` | `borderWidth` | `fds-stroke/fds-stroke-200` | Raw value `2` |
 
 ## Border / Stroke — Constants
 
