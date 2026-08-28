@@ -268,6 +268,15 @@ spacing        050 a47bc044cac9769a93b7e9255816e726271848ca
 > effectively invisible until real game art replaces the placeholder — this is per-spec, not a
 > build error, but flag it to the designer if a visible placeholder icon is wanted here.
 
+> **Re-rebuilt again (2026-08-28, same day):** built from scratch as a from-scratch `COMPONENT_SET`
+> (`FDS-Carousel`, node `238:154`, Default `238:72` / Featured `238:113`) via raw `$fig` primitives
+> (no DS Fabric instances) with a simple generic square+dot media placeholder icon instead of an
+> SVG glyph. All spec values (sizes, gap/padding, radii, colours, elevation/specular/emission)
+> reproduced 1:1, confirmed by screenshot. **Hit the `layoutPositioning: 'ABSOLUTE'` +
+> same-call-`x`/`y` pitfall again** on the media icon (see `component-gotchas.md` / hugin.prompt.md
+> Step 4 rule 11) — fixed with a post-`$fig.done()` query pass. Confirms this is a real recurring
+> trap, not a one-off.
+
 Remember `frame.setExplicitVariableModeForCollection(collection, '24:1')` (Betsson Light) or the
 whole Flair layer renders invisible.
 
