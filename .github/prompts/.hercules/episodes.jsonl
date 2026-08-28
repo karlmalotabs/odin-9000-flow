@@ -139,3 +139,5 @@
 {"runId":"odin-20260828-100326","skill":"odin","phase":"open","summary":"MIMR bind TS to NV only, no dry run - Marketing_IT (212:21620)","ts":"2026-08-28T08:03:41.479Z"}
 {"runId":"odin-20260828-100326","skill":"mimr","phase":"step","summary":"scan-bind-live (no dry run, direct write) on Marketing_IT (212:21620, instances included): 43 prop candidates + 8 typography candidates, 51/51 applied, 0 failed, 0 not found. Verified via screenshot.","ts":"2026-08-28T08:05:00.643Z"}
 {"runId":"odin-20260828-100326","skill":"odin","phase":"close","summary":"Marketing_IT TS->NV bind complete, 51/51 applied, verified via screenshot","outcome":"complete","ts":"2026-08-28T08:05:00.719Z"}
+{"runId":"odin-20260828-100856","skill":"mimr","phase":"open","summary":"Bind TS to NV on Marketing_IT card (212:21770), include instances, no dry run","ts":"2026-08-28T08:09:05.926Z"}
+{"runId":"odin-20260828-100856","skill":"mimr","phase":"close","summary":"Bound 51/51 TS->NV on Marketing_IT (212:21770): 43 structural props + 8 typography styles, include-instances, no dry run","result":"ok","outcome":"complete","writes":51,"frame":"Marketing_IT","ts":"2026-08-28T08:10:40.486Z"}
