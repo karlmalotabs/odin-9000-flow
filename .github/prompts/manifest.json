@@ -96,6 +96,13 @@
       "scripts": [".github/prompts/saga/scripts/generate-component-css.mjs"],
       "loadWhen": "component output needed (last; depends on MIMR+VALI)"
     },
+    "shared": {
+      "role": "Cross-skill low-level Figma Plugin API utilities — direct execution, no read-only planning pass",
+      "prompt": null,
+      "agent": null,
+      "scripts": [".github/prompts/shared/scripts/detach.figma.js"],
+      "loadWhen": "the user directly instructs an action this covers (e.g. 'detach this instance') in ANY skill context — skip analysis/reasoning, just inject + run the script. The instruction itself is the confirmation."
+    },
     "librarian": {
       "role": "Owns the large external Token Studio JSON + KB .md repos; narrow query interface only",
       "prompt": null,

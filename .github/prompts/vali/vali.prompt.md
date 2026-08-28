@@ -74,6 +74,12 @@ It collapses discovery + detach-planning + detach + collapse + rename into **two
 conversion, wrap/ungroup review, annotation questions) rather than just a naming cleanup, use the
 normal Phase 1→2→3 flow below.
 
+**Standalone "just detach this" requests** (no naming cleanup involved, e.g. "detach this
+instance so I can edit it") — use `../shared/scripts/detach.figma.js` instead. It has no
+read-only planning pass at all: the user's instruction to detach IS the confirmation, so it just
+executes. See `../shared/scripts/detach.figma.js`'s header for the injection contract
+(`NODE_IDS`, `CASCADE_DEPTH`).
+
 ---
 
 ## External files
