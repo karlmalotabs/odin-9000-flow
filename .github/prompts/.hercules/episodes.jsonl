@@ -116,3 +116,6 @@
 {"runId":"odin-20260828-083840","skill":"odin","phase":"open","summary":"Bind TS to NV only - Notification banner (166:9451)","ts":"2026-08-28T06:38:49.034Z"}
 {"runId":"odin-20260828-083840","skill":"mimr","phase":"step","summary":"scan-bind-live on Notification banner (166:9451, COMPONENT_SET, 6 variants, instances included): 42 candidates (fill 30, borderRadius 6, borderColor 6), 42/42 applied, 0 failed, 0 not found","ts":"2026-08-28T06:40:13.825Z"}
 {"runId":"odin-20260828-083840","skill":"odin","phase":"close","summary":"Bound 42/42 TS tokens to NV on Notification banner (166:9451), verified via screenshot","outcome":"complete","ts":"2026-08-28T06:40:13.906Z"}
+{"runId":"odin-20260828-084130","skill":"odin","phase":"open","summary":"Bind TS to NV only - Snackbar (170:9542)","ts":"2026-08-28T06:41:48.541Z"}
+{"runId":"odin-20260828-084130","skill":"mimr","phase":"step","summary":"scan-bind-live on Snackbar (170:9542, COMPONENT_SET, 1385 nodes incl. 320 instance-internal): 701 candidates (fill 573, borderRadius 128), 701/701 applied, 0 failed, 0 not found","ts":"2026-08-28T06:43:27.416Z"}
+{"runId":"odin-20260828-084130","skill":"odin","phase":"close","summary":"Bound 701/701 TS tokens to NV on Snackbar (170:9542), verified via screenshot","outcome":"complete","ts":"2026-08-28T06:43:27.497Z"}
