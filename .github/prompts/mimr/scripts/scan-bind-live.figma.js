@@ -59,17 +59,23 @@
  * available library) are left untouched and reported in notFoundSample — never guessed.
  */
 
-const TS_NS = 'tokens';
+const TS_NS = "tokens";
 
 const TS_TO_NV_PROP = {
-  fill: ['fills', 'fillStyleId'],
-  borderColor: ['strokes'],
-  borderRadius: ['topLeftRadius', 'topRightRadius', 'bottomLeftRadius', 'bottomRightRadius', 'cornerRadius'],
-  itemSpacing: ['itemSpacing'],
-  spacing: ['itemSpacing'],
-  horizontalPadding: ['paddingLeft', 'paddingRight'],
-  verticalPadding: ['paddingTop', 'paddingBottom'],
-  borderWidth: ['strokeTopWeight', 'strokeWeight'],
+  fill: ["fills", "fillStyleId"],
+  borderColor: ["strokes"],
+  borderRadius: [
+    "topLeftRadius",
+    "topRightRadius",
+    "bottomLeftRadius",
+    "bottomRightRadius",
+    "cornerRadius",
+  ],
+  itemSpacing: ["itemSpacing"],
+  spacing: ["itemSpacing"],
+  horizontalPadding: ["paddingLeft", "paddingRight"],
+  verticalPadding: ["paddingTop", "paddingBottom"],
+  borderWidth: ["strokeTopWeight", "strokeWeight"],
 };
 
 function getTS(node) {
@@ -79,7 +85,7 @@ function getTS(node) {
     for (const k of keys) {
       const raw = node.getSharedPluginData(TS_NS, k);
       if (!raw) continue;
-      ts[k] = raw.replace(/^"|"$/g, '');
+      ts[k] = raw.replace(/^"|"$/g, "");
     }
   } catch (_) {}
   return Object.keys(ts).length ? ts : null;
@@ -103,7 +109,11 @@ function getNV(node) {
     }
   } catch (_) {}
   try {
-    if (node.fillStyleId && typeof node.fillStyleId === 'string' && node.fillStyleId.length > 0) {
+    if (
+      node.fillStyleId &&
+      typeof node.fillStyleId === "string" &&
+      node.fillStyleId.length > 0
+    ) {
       nv.fillStyleId = node.fillStyleId;
     }
   } catch (_) {}
@@ -120,17 +130,25 @@ if (!root) return JSON.stringify({ error: `Root "${ROOT_ID}" not found` });
 
 // ── Tree walk (respects INCLUDE_INSTANCES) ──────────────────────────────────
 
-const stats = { total: 0, instances: 0, withTS: 0, withNV: 0, both: 0, unbound: 0 };
+const stats = {
+  total: 0,
+  instances: 0,
+  withTS: 0,
+  withNV: 0,
+  both: 0,
+  unbound: 0,
+};
 const candidateCountByProp = {};
 const pending = []; // { node, tsKey, tsVal }
 const typographyDistinctPaths = {}; // dot-path -> unbound count
 const typographyPending = []; // { node, tsPath }
-const TYPO_KEY_MAP = typeof TYPOGRAPHY_KEY_MAP !== 'undefined' ? TYPOGRAPHY_KEY_MAP : {};
+const TYPO_KEY_MAP =
+  typeof TYPOGRAPHY_KEY_MAP !== "undefined" ? TYPOGRAPHY_KEY_MAP : {};
 
 function visit(node, depth) {
   if (depth > 40) return;
   stats.total++;
-  const isInstance = node.type === 'INSTANCE';
+  const isInstance = node.type === "INSTANCE";
   if (isInstance) stats.instances++;
 
   const ts = getTS(node);
@@ -142,11 +160,12 @@ function visit(node, depth) {
 
   if (ts) {
     for (const [tsKey, tsVal] of Object.entries(ts)) {
-      if (tsKey === 'typography') {
+      if (tsKey === "typography") {
         // Typography binds to a TEXT STYLE (node.textStyleId), not a variable —
         // handled in its own pass below, never through TS_TO_NV_PROP.
-        if (node.type === 'TEXT' && !node.textStyleId) {
-          typographyDistinctPaths[tsVal] = (typographyDistinctPaths[tsVal] || 0) + 1;
+        if (node.type === "TEXT" && !node.textStyleId) {
+          typographyDistinctPaths[tsVal] =
+            (typographyDistinctPaths[tsVal] || 0) + 1;
           typographyPending.push({ node, tsPath: tsVal });
         }
         continue;
@@ -164,22 +183,28 @@ function visit(node, depth) {
   // agent explicitly asked to preserve that (read-only-instance) behavior.
   if (isInstance && !INCLUDE_INSTANCES) return;
 
-  if ('children' in node && node.children) {
+  if ("children" in node && node.children) {
     for (const child of node.children) visit(child, depth + 1);
   }
 }
 visit(root, 0);
 
-const candidateTotal = Object.values(candidateCountByProp).reduce((a, b) => a + b, 0);
+const candidateTotal = Object.values(candidateCountByProp).reduce(
+  (a, b) => a + b,
+  0,
+);
 const typographyCandidateTotal = typographyPending.length;
 
-if (typeof DRY_RUN === 'undefined' || DRY_RUN) {
+if (typeof DRY_RUN === "undefined" || DRY_RUN) {
   return JSON.stringify({
     root: { id: root.id, name: root.name, type: root.type },
     stats,
     candidateCountByProp,
     candidateTotal,
-    typography: { candidateTotal: typographyCandidateTotal, distinctPaths: typographyDistinctPaths },
+    typography: {
+      candidateTotal: typographyCandidateTotal,
+      distinctPaths: typographyDistinctPaths,
+    },
   });
 }
 
@@ -187,47 +212,55 @@ if (typeof DRY_RUN === 'undefined' || DRY_RUN) {
 
 const localVars = await figma.variables.getLocalVariablesAsync();
 const byName = {};
-for (const v of localVars) byName[v.name] = { source: 'local', variable: v };
+for (const v of localVars) byName[v.name] = { source: "local", variable: v };
 
-if (Object.keys(byName).length === 0 || (typeof LIB_COLLECTION_KEYS !== 'undefined' && LIB_COLLECTION_KEYS.length)) {
-  let keys = typeof LIB_COLLECTION_KEYS !== 'undefined' ? LIB_COLLECTION_KEYS : [];
+if (
+  Object.keys(byName).length === 0 ||
+  (typeof LIB_COLLECTION_KEYS !== "undefined" && LIB_COLLECTION_KEYS.length)
+) {
+  let keys =
+    typeof LIB_COLLECTION_KEYS !== "undefined" ? LIB_COLLECTION_KEYS : [];
   if (!keys.length) {
     try {
-      const cols = await figma.teamLibrary.getAvailableLibraryVariableCollectionsAsync();
+      const cols =
+        await figma.teamLibrary.getAvailableLibraryVariableCollectionsAsync();
       keys = cols.map((c) => c.key);
     } catch (_) {}
   }
   for (const k of keys) {
     try {
-      const vars = await figma.teamLibrary.getVariablesInLibraryCollectionAsync(k);
+      const vars =
+        await figma.teamLibrary.getVariablesInLibraryCollectionAsync(k);
       for (const v of vars) {
-        if (!byName[v.name]) byName[v.name] = { source: 'library', key: v.key };
+        if (!byName[v.name]) byName[v.name] = { source: "library", key: v.key };
       }
     } catch (_) {}
   }
 }
 
 function findEntry(tsPath) {
-  const slash = tsPath.replace(/\./g, '/');
+  const slash = tsPath.replace(/\./g, "/");
   if (byName[slash]) return byName[slash];
-  const noVarPrefix = slash.replace(/^var\//, '');
+  const noVarPrefix = slash.replace(/^var\//, "");
   if (byName[noVarPrefix]) return byName[noVarPrefix];
-  const segs = slash.split('/');
+  const segs = slash.split("/");
   if (segs.length >= 2) {
-    const suffix2 = segs.slice(-2).join('/');
+    const suffix2 = segs.slice(-2).join("/");
     for (const [k, entry] of Object.entries(byName)) {
-      if (k === suffix2 || k.endsWith('/' + suffix2)) return entry;
+      if (k === suffix2 || k.endsWith("/" + suffix2)) return entry;
     }
   }
   const last = segs[segs.length - 1];
-  const cands = Object.entries(byName).filter(([k]) => k === last || k.endsWith('/' + last));
+  const cands = Object.entries(byName).filter(
+    ([k]) => k === last || k.endsWith("/" + last),
+  );
   if (cands.length === 1) return cands[0][1];
   return null;
 }
 
 const _importCache = {};
 async function resolveVariable(entry) {
-  if (entry.source === 'local') return entry.variable;
+  if (entry.source === "local") return entry.variable;
   if (_importCache[entry.key]) return _importCache[entry.key];
   try {
     const v = await figma.variables.importVariableByKeyAsync(entry.key);
@@ -243,8 +276,12 @@ async function resolveVariable(entry) {
 function bindPaintProp(node, prop, variable) {
   try {
     const paints = node[prop] ? node[prop].slice() : [];
-    if (paints.length === 0) paints.push(figma.util.solidPaint('#000000'));
-    paints[0] = figma.variables.setBoundVariableForPaint(paints[0], 'color', variable);
+    if (paints.length === 0) paints.push(figma.util.solidPaint("#000000"));
+    paints[0] = figma.variables.setBoundVariableForPaint(
+      paints[0],
+      "color",
+      variable,
+    );
     node[prop] = paints;
     return true;
   } catch (_) {
@@ -253,7 +290,12 @@ function bindPaintProp(node, prop, variable) {
 }
 function bindCornerRadius(node, variable) {
   try {
-    for (const p of ['topLeftRadius', 'topRightRadius', 'bottomLeftRadius', 'bottomRightRadius']) {
+    for (const p of [
+      "topLeftRadius",
+      "topRightRadius",
+      "bottomLeftRadius",
+      "bottomRightRadius",
+    ]) {
       if (p in node) node.setBoundVariable(p, variable);
     }
     return true;
@@ -282,41 +324,61 @@ for (const { node, tsKey, tsVal } of pending) {
   if (!entry) {
     report.notFound++;
     notFoundByProp[tsKey] = (notFoundByProp[tsKey] || 0) + 1;
-    if (notFoundSample.length < 40) notFoundSample.push({ id: node.id, name: node.name, tsKey, tsPath: tsVal });
+    if (notFoundSample.length < 40)
+      notFoundSample.push({
+        id: node.id,
+        name: node.name,
+        tsKey,
+        tsPath: tsVal,
+      });
     continue;
   }
   const variable = await resolveVariable(entry);
   if (!variable) {
     report.notFound++;
     notFoundByProp[tsKey] = (notFoundByProp[tsKey] || 0) + 1;
-    if (notFoundSample.length < 40) notFoundSample.push({ id: node.id, name: node.name, tsKey, tsPath: tsVal, reason: 'import_failed' });
+    if (notFoundSample.length < 40)
+      notFoundSample.push({
+        id: node.id,
+        name: node.name,
+        tsKey,
+        tsPath: tsVal,
+        reason: "import_failed",
+      });
     continue;
   }
 
   let ok = false;
-  if (tsKey === 'fill') ok = bindPaintProp(node, 'fills', variable);
-  else if (tsKey === 'borderColor') ok = bindPaintProp(node, 'strokes', variable);
-  else if (tsKey === 'borderRadius') ok = bindCornerRadius(node, variable);
-  else if (tsKey === 'itemSpacing' || tsKey === 'spacing') ok = bindScalar(node, 'itemSpacing', variable);
-  else if (tsKey === 'horizontalPadding') {
+  if (tsKey === "fill") ok = bindPaintProp(node, "fills", variable);
+  else if (tsKey === "borderColor")
+    ok = bindPaintProp(node, "strokes", variable);
+  else if (tsKey === "borderRadius") ok = bindCornerRadius(node, variable);
+  else if (tsKey === "itemSpacing" || tsKey === "spacing")
+    ok = bindScalar(node, "itemSpacing", variable);
+  else if (tsKey === "horizontalPadding") {
     try {
-      node.setBoundVariable('paddingLeft', variable);
-      node.setBoundVariable('paddingRight', variable);
+      node.setBoundVariable("paddingLeft", variable);
+      node.setBoundVariable("paddingRight", variable);
       ok = true;
     } catch (_) {
       ok = false;
     }
-  } else if (tsKey === 'verticalPadding') {
+  } else if (tsKey === "verticalPadding") {
     try {
-      node.setBoundVariable('paddingTop', variable);
-      node.setBoundVariable('paddingBottom', variable);
+      node.setBoundVariable("paddingTop", variable);
+      node.setBoundVariable("paddingBottom", variable);
       ok = true;
     } catch (_) {
       ok = false;
     }
-  } else if (tsKey === 'borderWidth') {
+  } else if (tsKey === "borderWidth") {
     try {
-      for (const p of ['strokeTopWeight', 'strokeBottomWeight', 'strokeLeftWeight', 'strokeRightWeight']) {
+      for (const p of [
+        "strokeTopWeight",
+        "strokeBottomWeight",
+        "strokeLeftWeight",
+        "strokeRightWeight",
+      ]) {
         if (p in node) node.setBoundVariable(p, variable);
       }
       ok = true;
@@ -328,7 +390,8 @@ for (const { node, tsKey, tsVal } of pending) {
   if (ok) report.applied++;
   else {
     report.failed++;
-    if (failedSample.length < 20) failedSample.push({ id: node.id, name: node.name, tsKey, tsPath: tsVal });
+    if (failedSample.length < 20)
+      failedSample.push({ id: node.id, name: node.name, tsKey, tsPath: tsVal });
   }
 }
 
