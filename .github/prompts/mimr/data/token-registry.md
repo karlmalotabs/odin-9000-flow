@@ -521,14 +521,14 @@
 | `fds-headline-regular`        | `Headline.fds.fds-headline-regular`          | `typography` | `bd2c297f1cdb67187490d206b3fe45d07d299717` |             |
 | `fds-headline-small`          | `Headline.fds.fds-headline-small`            | `typography` | `40f31265cdd9cc28406bc59b187e1cebbc22d304` |             |
 | `fds-headline-tiny`           | `Headline.fds.fds-headline-tiny`             | `typography` | `152b6bfadc287e484617763b88feee41d5323922` |             |
-| `Lead`                        | `Paragraphs.Lead`                            | `typography` |                                            |             |
-| `Lead - bold`                 | `Paragraphs.Lead - bold`                     | `typography` |                                            |             |
-| `Regular`                     | `Paragraphs.Regular`                         | `typography` |                                            |             |
-| `Regular - bold`              | `Paragraphs.Regular - bold`                  | `typography` |                                            |             |
-| `Small`                       | `Paragraphs.Small`                           | `typography` |                                            |             |
-| `Small - bold`                | `Paragraphs.Small - bold`                    | `typography` |                                            |             |
-| `Tiny`                        | `Paragraphs.Tiny`                            | `typography` |                                            |             |
-| `Tiny - bold`                 | `Paragraphs.Tiny - bold`                     | `typography` |                                            |             |
+| `Lead`                        | `Paragraphs.Lead`                            | `typography` | `43e8d56429b6031f18e1c32194f390e7cab1944c` |             |
+| `Lead - bold`                 | `Paragraphs.Lead - bold`                     | `typography` | `2cc792d3fbbf6c595a38dbf5f7e7c4759b772d54` |             |
+| `Regular`                     | `Paragraphs.Regular`                         | `typography` | `66f268742fe7dc2ea12e7568b009be5a2b6d0310` |             |
+| `Regular - bold`              | `Paragraphs.Regular - bold`                  | `typography` | `527e029ba54ffaf1cc12568dbbdd3bd1d95e9b5b` |             |
+| `Small`                       | `Paragraphs.Small`                           | `typography` | `c58ef46aae85c78a71bb1ae36052db6fbd97f871` |             |
+| `Small - bold`                | `Paragraphs.Small - bold`                    | `typography` | `77bc1b0527e4e875b0cba798bf2a3be55c9380a6` |             |
+| `Tiny`                        | `Paragraphs.Tiny`                            | `typography` | `b0a7222931abe248ff5e1a3743ee0da763e54a6b` |             |
+| `Tiny - bold`                 | `Paragraphs.Tiny - bold`                     | `typography` | `0c59ade70669fa820431d62ca40a05778a5cd34c` |             |
 | `fds-paragraphs-lead`         | `Paragraphs.fds.fds-paragraphs-lead`         | `typography` | `53261f70ad095a9b4e13adb7ec4f7c3d0af3993e` |             |
 | `fds-paragraphs-lead-bold`    | `Paragraphs.fds.fds-paragraphs-lead-bold`    | `typography` | `30b3631db235678277461c33d827dabd7721e01b` |             |
 | `fds-paragraphs-regular`      | `Paragraphs.fds.fds-paragraphs-regular`      | `typography` | `11f3aa5b57ab8b8923897d1536bff5f27ebbb775` |             |
