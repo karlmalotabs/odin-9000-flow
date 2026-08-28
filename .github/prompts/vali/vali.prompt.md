@@ -36,6 +36,43 @@ Key roles:
 |---|---|---|
 | **Analyse** | user provides a Figma URL | Phase 1 — scan + build OPS plan |
 | **Execute** | user confirms the plan | Phases 2+3 — single `process.figma.js` call |
+| **Fast fix (live)** | "fix the layer naming" / "this is full of default names" as a direct action, especially on an INSTANCE | `scripts/fix-names-live.figma.js` — see below |
+
+---
+
+## Fast fix (live) — direct "fix the layer naming / default names" requests
+
+When the user asks directly to clean up default-Figma-named layers (`Frame 12`, `Group 3`, …) —
+especially when the target is (or contains) an INSTANCE — use `scripts/fix-names-live.figma.js`
+instead of hand-rolling a one-off detach/collapse/rename script. It replaced an ad-hoc flow that
+took ~11 min (metadata probe → raw read-only walk → eyeball the JSON → hand-write a script →
+screenshot) on 2026-08-28; target is **~2 min**, matching MIMR's `scan-bind-live.figma.js` pace.
+
+It collapses discovery + detach-planning + detach + collapse + rename into **two calls total**:
+
+1. **Dry run** — inject `DRY_RUN = true`. Fully read-only (descending into INSTANCE children for
+   *reading* is always safe — only mutating them is not): returns `{ wouldDetach, wouldCollapseCount,
+   wouldRenameCount, wouldRenameSample }`. `wouldDetach` lists every INSTANCE that would need
+   detaching, with `looksLikeSharedComponent: true` flagging anything named `fds-*`/`FDS-*` — a
+   real design-system component whose library link would be permanently broken. **Always surface
+   `wouldDetach` to the user and get an explicit yes/no before writing** — this is the mandatory
+   confirm gate, same as Phase 1's "ask before Phase 2", just against a structured plan instead of
+   a hand-built table.
+2. **Write** — same injection with `DRY_RUN = false`. Detaches only the INSTANCE ancestors that
+   actually sit on the path to a real finding (a sibling instance with nothing wrong underneath,
+   e.g. a genuine `FDS-Badge`, is left completely alone — live and linked). Then collapses
+   redundant single-child/no-pad/no-fill wrapper chains (a wrapper of a wrapper collapses in one
+   pass, not one ungroup per level), then classifies + renames every surviving default-named FRAME
+   to `{direction / role}` using the exact rules in `data/layout-rules.md`. Returns `{ root,
+   detachedCount, detached, collapsedCount, renamedCount, renamed }`.
+
+**`root.id` in the write-pass response may differ from the injected `ROOT_ID`** —
+`detachInstance()` returns a node with a new id when the root itself was an instance. Use the
+ returned id for any follow-up read (e.g. a verification screenshot), not the original.
+
+**When NOT to use this path:** if the user wants the full Phase 1 analysis table (GROUP→AL
+conversion, wrap/ungroup review, annotation questions) rather than just a naming cleanup, use the
+normal Phase 1→2→3 flow below.
 
 ---
 
@@ -46,6 +83,7 @@ Key roles:
 | `data/layout-rules.md` | Classification rules + naming conventions | **User / Agent** |
 | `scripts/scan.figma.js` | **Phase 1 — MANDATORY** tree scan; inject `NODE_ID` + `DEPTH` | **Agent (read-only)** |
 | `scripts/process.figma.js` | **Phase 2+3 — MANDATORY** execute OPS plan; inject `NODE_ID` + `OPS` | **Agent (read-only)** |
+| `scripts/fix-names-live.figma.js` | **Fast fix (live)** — direct default-name cleanup; inject `ROOT_ID` + `DRY_RUN` | **Agent (read-only)** |
 
 ### Load-once rule
 

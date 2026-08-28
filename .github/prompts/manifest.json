@@ -38,7 +38,8 @@
       "model": "Claude Sonnet 4.6",
       "scripts": [
         ".github/prompts/vali/scripts/scan.figma.js",
-        ".github/prompts/vali/scripts/process.figma.js"
+        ".github/prompts/vali/scripts/process.figma.js",
+        ".github/prompts/vali/scripts/fix-names-live.figma.js"
       ],
       "data": [".github/prompts/vali/data/layout-rules.md"],
       "loadWhen": "layout/structure needs to be coded (before MIMR)"

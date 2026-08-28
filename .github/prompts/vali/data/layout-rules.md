@@ -142,6 +142,11 @@ generic-named FRAME wrappers. All of it is read-only until every ancestor level 
 4. **Only classify + rename what survives collapsing.** Fewer, more meaningful nodes remain once
    the redundant chain is gone.
 
+**Automated:** `scripts/fix-names-live.figma.js` implements steps 2–4 deterministically in a
+single dry-run/write pair (see `vali.prompt.md` § Fast fix (live)) — use it instead of
+hand-writing this procedure each time. ~2 min end to end vs. ~11 min doing it manually
+(2026-08-28, Bonus card list).
+
 
 Key steps (for reference):
 
