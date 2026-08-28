@@ -43,6 +43,23 @@
       "data": [".github/prompts/vali/data/layout-rules.md"],
       "loadWhen": "layout/structure needs to be coded (before MIMR)"
     },
+    "hugin": {
+      "role": "Rapid draft & layout composer — builds new screens/components from a prompt or reference image using library components + tokens",
+      "prompt": ".github/prompts/hugin/hugin.prompt.md",
+      "agent": ".github/agents/hugin.agent.md",
+      "model": "Claude Sonnet 4.6",
+      "escalateTo": {
+        "Claude Opus 4.8": "large multi-screen draft with many ambiguous component/variant choices"
+      },
+      "data": [
+        ".github/prompts/hugin/data/component-compendium.md",
+        ".github/prompts/hugin/data/component-gotchas.md",
+        ".github/prompts/hugin/data/flair-style-guide.md",
+        ".github/prompts/mimr/data/mapping-rules.md",
+        ".github/prompts/vali/data/layout-rules.md"
+      ],
+      "loadWhen": "building new screens/components from a prompt or reference image (before an optional light VALI/MIMR polish pass)"
+    },
     "mimr": {
       "role": "Token audit + bulk write (TS + native variables)",
       "prompt": ".github/prompts/mimr/mimr.prompt.md",
@@ -113,7 +130,8 @@
       "modi": "Claude Haiku 4.5",
       "vali": "Claude Sonnet 4.6",
       "mimr": "Claude Sonnet 4.6",
-      "saga": "Claude Sonnet 4.6"
+      "saga": "Claude Sonnet 4.6",
+      "hugin": "Claude Sonnet 4.6"
     },
     "escalation": "Override the default ONLY when a skill's escalateTo trigger is met for the specific task. Downgrade a Sonnet default to Claude Haiku 4.5 for trivial, mechanical steps. Record the chosen model in the step episode.",
     "escalationSafetyGate": {
@@ -126,16 +144,19 @@
     "runSubagentFormat": "<Model Name> (copilot)"
   },
   "pipelineOrder": ["modi", "vali", "mimr", "saga"],
+  "draftPipelineOrder": ["hugin", "vali", "mimr"],
   "handoffContracts": {
     "vali->mimr": "node list [{id,type}] forwarded as PRIOR_SCAN (skips MIMR tree walk)",
     "mimr->saga": "NV map {prop: shortName, value} reused for --fds-* CSS vars (no re-resolution)",
-    "modi->vali": "swap report; converted instances ready for layout pass"
+    "modi->vali": "swap report; converted instances ready for layout pass",
+    "hugin->vali": "created screen/section node list, forwarded if a structural cleanup pass is needed beyond HUGIN's own Auto Layout construction",
+    "hugin->mimr": "created node list forwarded as PRIOR_SCAN for a deeper token audit pass"
   },
   "$herculesBundle": "This manifest is the local analog of a Hercules skill-bundle (~/.hercules/skill-bundles/<slug>.yaml). The `bundle` block below mirrors that schema {name, description, skills[], instruction} so it can be emitted verbatim when syncing to a real Hercules install.",
   "bundle": {
     "name": "odin-9000",
-    "description": "Figma design-to-code pipeline: wireframe resolve (MODI) -> Auto Layout (VALI) -> token audit/write (MIMR) -> component codegen (SAGA), with Librarian for KB/token lookups.",
-    "skills": ["modi", "vali", "mimr", "saga", "librarian"],
-    "instruction": "Always read this manifest + the memory adapter first. Run the pipeline in pipelineOrder, honouring handoffContracts to avoid redundant Figma reads. Dispatch each skill as an isolated subagent; recall lessons before work and append lessons on Observe. Every Figma write needs an open->close episode pair."
+    "description": "Figma design-to-code pipeline: wireframe resolve (MODI) -> Auto Layout (VALI) -> token audit/write (MIMR) -> component codegen (SAGA), with Librarian for KB/token lookups, and HUGIN for rapid prompt/image-to-draft composition.",
+    "skills": ["modi", "vali", "mimr", "saga", "librarian", "hugin"],
+    "instruction": "Always read this manifest + the memory adapter first. Run the pipeline in pipelineOrder (editing an existing frame) or draftPipelineOrder (building new screens from a prompt/image), honouring handoffContracts to avoid redundant Figma reads. Dispatch each skill as an isolated subagent; recall lessons before work and append lessons on Observe. Every Figma write needs an open->close episode pair."
   }
 }

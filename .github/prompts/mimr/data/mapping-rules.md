@@ -28,6 +28,32 @@ When binding fill tokens to content nodes (TEXT, VECTOR icons), the token MUST m
 
 ---
 
+## Component naming gotchas
+
+> **`FDS-Button-Control-Two` is a 2-button control group, not a single secondary button.** Instantiating it for a single lower-emphasis CTA produces a stacked pair of buttons (one bound, one still showing default placeholder text). For a single secondary/low-emphasis button, use `FDS-Button-Control-One` with `Hierarchy=Tertiary` instead. Verify a component's actual child/instance count via a quick inspection (`componentPropertyDefinitions` + rendered children) before assuming a plausible name matches its true structure.
+
+> **`layoutSizingHorizontal`/`layoutSizingVertical: 'FILL'` cannot be set in the initial `$fig.autoLayout`/`$fig.instance`/`$fig.text` creation options if the node has no auto-layout parent yet** (e.g. a wrapper frame built standalone before being appended elsewhere) — Figma throws `FILL can only be set on children of auto-layout frames`. Create the node first, `appendChild`/`insertChild` it into its auto-layout parent, **then** set `layoutSizingHorizontal`/`layoutSizingVertical = 'FILL'` via a plain property assignment on the real node.
+
+---
+
+## `use_figma` script structure — pass separation
+
+**Never interleave a raw `figma.*` await (`getNodeByIdAsync`, `importComponentSetByKeyAsync`, etc.) between `$fig.autoLayout`/`$fig.instance` creation calls in the same loop iteration** — it produces `Invalid handle` errors on the later `$fig` call, even though the identical `$fig` call works fine in isolation. Structure any script mixing both as three strict passes: (1) pure raw discovery — collect node ids/indices into plain data, no `$fig` calls; (2) pure `$fig` creation — call every `$fig.autoLayout`/`$fig.instance`/etc. back-to-back, then a single `await $fig.done()`; (3) pure raw mutation — re-fetch nodes by id, reparent, set text, bind variables.
+
+## Auditing a FRAME whose children are already placed INSTANCEs
+
+`audit-resolve-digest.figma.js` / `audit.figma.js` both stop recursion at instance boundaries — running either on a plain FRAME root whose direct children are INSTANCEs (not a COMPONENT_SET) yields only top-level FRAME bindings + an instance count, zero coverage of the actual component content. **Do not audit the frame root directly in this case.** Instead: (1) get `mainComponent.id` for each instance (via `get_design_context` or a targeted Plugin API call), then (2) run `audit-resolve-digest.figma.js` on each `mainComponent` separately, or (3) escalate and use a custom instance-recursive walk.
+
+## Cross-theme copy-paste artifacts in variant sets
+
+When auditing multi-theme variant sets, diff the token keys of `Hidden`/no-stroke variants across themes. A `borderColor` TS token present on one theme's `Hidden`-stroke variant but absent on the matching variant of another theme (e.g. `fds-collapsible` `on-alternate-surface` vs `on-surface` Stroke=Hidden) is a copy-paste artifact from theme duplication — strip it rather than binding NV to it.
+
+## Verify the NV variable name prefix before writing
+
+Some files namespace all NV variable names with an extra `var/` prefix (e.g. `var/fds/fds-surface-variant`, not `fds/fds-surface-variant`) on top of the usual `fds-` token prefix. Looking up the audit shorthand `fds/fds-*` directly in `getLocalVariablesAsync` will silently miss on such files. Always run a discovery pass (list a few actual NV names) before the write pass on a file you haven't audited before, and adjust the lookup prefix to match what's actually there.
+
+---
+
 ## YAML rule template
 
 Use this schema when generating `RULES` for `bulk-update.figma.js`. Each YAML block maps directly to one entry in the `RULES` array.
@@ -773,6 +799,39 @@ For file `mavdkFAsPZZiatzwZ39wsn` ("Fig Vars FDS Demo"), the project PAT lacks `
 ### fds-collapsible inner-node NV gap
 
 fds-collapsible COMPONENT roots have TS+NV complete fill/borderColor, but inner layers (chevron VECTORs, title TEXTs, content-slot INSTANCEs) are TS-only and need an NV write pass: chevron → `fds-on-surface-m` / `fds-on-alternate-surface-low`; title TEXT → `fds-on-surface-hi` / `fds-on-alternate-surface-hi` + `Paragraphs.fds` typography; content slots → `fds-surface-variant` / `fds-alternate-surface-variant`. Also fix node `8889:78084` (on-alternate-surface, Stroke=Hidden, Accordion-State=Open) which carries `fds-surface-variant` fill TS instead of `fds-alternate-surface-variant` (copy-paste artifact) before running the NV pass.
+
+---
+
+## Audit strategy notes (REST vs. Plugin API)
+
+### REST-derived write-plan node IDs are provisional
+
+When MIMR audits via REST (no Plugin API access in the subagent context), treat every write-plan
+node ID as **provisional**, not confirmed. REST snapshots can diverge from the live Plugin API
+document for:
+
+- Hidden/inactive nested instance content that may have been detached or differs by document version.
+- Instance-override child IDs on deeply nested instances — the REST-reported ID occasionally does
+  not exist in the live tree; the real sibling has a different ID.
+
+Before executing a REST-derived write plan, spot-check a sample of deep override node IDs via
+`getNodeByIdAsync` (or re-run the write-plan node list through `get_design_context`/`get_metadata`
+live). If a "not found" cluster correlates with hidden nodes or one component, don't keep
+guessing — fetch the live `node.children` list directly and re-map.
+
+### REST canvas-traverse when Plugin API is unavailable
+
+The Figma REST `/nodes` endpoint returns empty `children[]` for `COMPONENT_SET` nodes regardless
+of `depth`, and the `/components` / `/component_sets` endpoints return 0 results for unpublished
+components. When Plugin API access isn't available, audit via **canvas-traverse** instead:
+
+```
+GET https://api.figma.com/v1/files/{file_key}/nodes?ids={canvasFrameId}&depth=6&plugin_data=shared
+```
+
+Start from the top-level **placed frame** on the canvas (not from the COMPONENT_SET root) — this
+returns all override nodes including TS `sharedPluginData`. Canvas instance override node IDs
+(`I{placed};{main};{child}` format) are the correct write-plan targets.
 
 ---
 

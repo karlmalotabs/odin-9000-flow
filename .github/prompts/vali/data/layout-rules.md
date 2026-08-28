@@ -51,6 +51,8 @@ If children are mostly the same family but broken by one or more semantically di
 
 > **Leaf node types:** RECTANGLE, TEXT, INSTANCE, COMPONENT, VECTOR, ELLIPSE, POLYGON, STAR, LINE
 
+> **COMPONENT_SET scan with zero GROUPs and all COMPONENT children already non-`NONE` `layoutMode`:** classify the run as **property-only** — emit only sizing/slot-AL property corrections, no structural OPS. Note: Figma 2025+ SLOT nodes inside a COMPONENT are writable (unlike INSTANCE internals), so a slot-level fix is still in scope even in a property-only run.
+
 ---
 
 ## 3. Wrapping rules (agent may create new AL frames)
